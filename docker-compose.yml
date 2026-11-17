@@ -1,0 +1,98 @@
+# ReservaCampus - despliegue local completo
+# Uso:  docker compose up --build   ->  http://localhost:8080
+name: reservacampus
+
+x-comun: &comun
+  restart: unless-stopped
+  environment: &env-comun
+    JWT_SECRET: ${JWT_SECRET:-dev-secret-cambiar-por-uno-largo-0123456789}
+    CORS_ORIGINS: http://localhost:8080
+    APP_TZ: America/Bogota
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: reservacampus
+      POSTGRES_PASSWORD: reservacampus
+      POSTGRES_DB: reservacampus
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U reservacampus"]
+      interval: 5s
+      retries: 10
+    ports: ["5432:5432"]
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: [redisdata:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  auth:
+    <<: *comun
+    build: ./services/auth
+    environment:
+      <<: *env-comun
+      DATABASE_URL: postgresql://reservacampus:reservacampus@postgres:5432/auth_db
+      ROOT_PATH: /api/auth
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@reservacampus.edu}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin12345}
+    depends_on: { postgres: { condition: service_healthy } }
+
+  reservas:
+    <<: *comun
+    build: ./services/reservas
+    environment:
+      <<: *env-comun
+      DATABASE_URL: postgresql://reservacampus:reservacampus@postgres:5432/reservas_db
+      REDIS_URL: redis://redis:6379/0
+      ROOT_PATH: /api/reservas
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  notificaciones:
+    <<: *comun
+    build: ./services/notificaciones
+    environment:
+      <<: *env-comun
+      DATABASE_URL: postgresql://reservacampus:reservacampus@postgres:5432/notificaciones_db
+      REDIS_URL: redis://redis:6379/0
+      ROOT_PATH: /api/notificaciones
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  chatbot:
+    <<: *comun
+    build: ./services/chatbot
+    environment:
+      <<: *env-comun
+      RESERVAS_URL: http://reservas:8000
+      ROOT_PATH: /api/chat
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL: ${GROQ_MODEL:-openai/gpt-oss-20b}
+    depends_on: [reservas]
+
+  gateway:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./frontend:/usr/share/nginx/html:ro
+    ports: ["8080:80"]
+    depends_on: [auth, reservas, notificaciones, chatbot]
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:

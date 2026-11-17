@@ -1,0 +1,105 @@
+# Blueprint de Render para ReservaCampus (plan gratuito)
+envVarGroups:
+  - name: reservacampus-comun
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: APP_TZ
+        value: America/Bogota
+      - key: CORS_ORIGINS
+        value: https://reservacampus-web.onrender.com
+
+databases:
+  - name: reservacampus-db
+    plan: free
+    databaseName: reservacampus
+    user: reservacampus
+
+services:
+  - type: keyvalue
+    name: reservacampus-cola
+    plan: free
+    maxmemoryPolicy: noeviction
+    ipAllowList: []
+
+  - type: web
+    name: reservacampus-auth
+    runtime: python
+    plan: free
+    rootDir: services/auth
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - fromGroup: reservacampus-comun
+      - key: DATABASE_URL
+        fromDatabase: { name: reservacampus-db, property: connectionString }
+      - key: ADMIN_EMAIL
+        value: admin@reservacampus.edu
+      - key: ADMIN_PASSWORD
+        value: Admin12345
+
+  - type: web
+    name: reservacampus-reservas
+    runtime: python
+    plan: free
+    rootDir: services/reservas
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - fromGroup: reservacampus-comun
+      - key: DATABASE_URL
+        fromDatabase: { name: reservacampus-db, property: connectionString }
+      - key: REDIS_URL
+        fromService: { type: keyvalue, name: reservacampus-cola, property: connectionString }
+
+  - type: web
+    name: reservacampus-notificaciones
+    runtime: python
+    plan: free
+    rootDir: services/notificaciones
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - fromGroup: reservacampus-comun
+      - key: DATABASE_URL
+        fromDatabase: { name: reservacampus-db, property: connectionString }
+      - key: REDIS_URL
+        fromService: { type: keyvalue, name: reservacampus-cola, property: connectionString }
+
+  - type: web
+    name: reservacampus-chatbot
+    runtime: python
+    plan: free
+    rootDir: services/chatbot
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - fromGroup: reservacampus-comun
+      - key: RESERVAS_URL
+        value: https://reservacampus-reservas.onrender.com
+      - key: GROQ_MODEL
+        value: openai/gpt-oss-20b
+      - key: GROQ_API_KEY
+        sync: false   # se ingresa en el dashboard de Render, nunca en el repositorio
+
+  - type: web
+    name: reservacampus-web
+    runtime: static
+    rootDir: frontend
+    buildCommand: sh build.sh
+    staticPublishPath: .
+    envVars:
+      - key: AUTH_URL
+        value: https://reservacampus-auth.onrender.com
+      - key: RESERVAS_URL
+        value: https://reservacampus-reservas.onrender.com
+      - key: NOTIF_URL
+        value: https://reservacampus-notificaciones.onrender.com
+      - key: CHAT_URL
+        value: https://reservacampus-chatbot.onrender.com

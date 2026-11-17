@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ReservaCampus · Reserva de espacios universitarios</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="marca" href="#" data-vista="espacios">
+      <span class="logo">RC</span>
+      <span>Reserva<b>Campus</b></span>
+    </a>
+    <nav id="nav" class="nav oculto">
+      <button data-vista="espacios" class="activo">Espacios</button>
+      <button data-vista="mis-reservas">Mis reservas</button>
+      <button data-vista="admin" class="solo-admin oculto">Administración</button>
+    </nav>
+    <div class="acciones">
+      <button id="btn-notif" class="icono oculto" aria-label="Notificaciones">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        <span id="notif-badge" class="badge oculto">0</span>
+      </button>
+      <div id="panel-notif" class="panel-notif oculto">
+        <div class="panel-notif-cab"><b>Notificaciones</b><button id="leer-todas" class="enlace">Marcar todas</button></div>
+        <ul id="lista-notif"></ul>
+      </div>
+      <span id="usuario-nombre" class="usuario"></span>
+      <button id="btn-salir" class="btn secundario oculto">Salir</button>
+    </div>
+  </header>
+
+  <!-- ============ LOGIN / REGISTRO ============ -->
+  <main id="vista-auth" class="vista auth">
+    <section class="hero">
+      <h1>Reserva salas, laboratorios y canchas <span>en segundos.</span></h1>
+      <p>Consulta disponibilidad en tiempo real, evita choques de horario y recibe confirmación al instante.
+        ¿Dudas? Pregúntale al asistente virtual.</p>
+      <ul class="hero-puntos">
+        <li>Disponibilidad en vivo</li><li>Notificaciones automáticas</li><li>Asistente con IA</li>
+      </ul>
+    </section>
+    <section class="tarjeta auth-tarjeta">
+      <div class="tabs">
+        <button class="tab activo" data-tab="login">Iniciar sesión</button>
+        <button class="tab" data-tab="registro">Crear cuenta</button>
+      </div>
+      <form id="form-login" class="form">
+        <label>Correo institucional<input type="email" name="email" required autocomplete="email" placeholder="tu@universidad.edu"></label>
+        <label>Contraseña<input type="password" name="password" required autocomplete="current-password"></label>
+        <button class="btn primario" type="submit">Entrar</button>
+        <p class="ayuda">Demo administrador: <code>admin@reservacampus.edu</code> / <code>Admin12345</code></p>
+      </form>
+      <form id="form-registro" class="form oculto">
+        <label>Nombre completo<input name="nombre" required minlength="2" maxlength="80" autocomplete="name"></label>
+        <label>Correo institucional<input type="email" name="email" required autocomplete="email"></label>
+        <label>Contraseña<input type="password" name="password" required minlength="8" autocomplete="new-password">
+          <small>Mínimo 8 caracteres, con letras y números.</small></label>
+        <button class="btn primario" type="submit">Crear cuenta</button>
+      </form>
+      <p id="auth-error" class="error" role="alert"></p>
+    </section>
+  </main>
+
+  <!-- ============ ESPACIOS ============ -->
+  <main id="vista-espacios" class="vista oculto">
+    <div class="cabecera-vista">
+      <div><h2>Espacios disponibles</h2><p class="sub">Elige un espacio y una fecha para ver sus horarios ocupados.</p></div>
+      <div class="filtros">
+        <input type="date" id="filtro-fecha" aria-label="Fecha">
+        <select id="filtro-tipo" aria-label="Tipo de espacio">
+          <option value="">Todos los tipos</option>
+          <option value="sala_estudio">Salas de estudio</option>
+          <option value="laboratorio">Laboratorios</option>
+          <option value="auditorio">Auditorios</option>
+          <option value="cancha">Canchas</option>
+        </select>
+      </div>
+    </div>
+    <div id="grid-espacios" class="grid"></div>
+  </main>
+
+  <!-- ============ MIS RESERVAS ============ -->
+  <main id="vista-mis-reservas" class="vista oculto">
+    <div class="cabecera-vista"><div><h2>Mis reservas</h2><p class="sub">Tus reservas activas e historial.</p></div></div>
+    <div id="lista-mis-reservas" class="lista"></div>
+  </main>
+
+  <!-- ============ ADMIN ============ -->
+  <main id="vista-admin" class="vista oculto">
+    <div class="cabecera-vista"><div><h2>Administración</h2><p class="sub">Resumen de uso y todas las reservas.</p></div></div>
+    <div id="stats" class="stats"></div>
+    <div class="admin-cols">
+      <section class="tarjeta">
+        <h3>Nuevo espacio</h3>
+        <form id="form-espacio" class="form">
+          <label>Nombre<input name="nombre" required maxlength="80"></label>
+          <div class="fila">
+            <label>Tipo<select name="tipo">
+              <option value="sala_estudio">Sala de estudio</option><option value="laboratorio">Laboratorio</option>
+              <option value="auditorio">Auditorio</option><option value="cancha">Cancha</option></select></label>
+            <label>Capacidad<input type="number" name="capacidad" min="1" max="1000" required value="6"></label>
+          </div>
+          <label>Ubicación<input name="ubicacion" required maxlength="120"></label>
+          <div class="fila">
+            <label>Abre<input type="time" name="hora_apertura" value="07:00" step="1800"></label>
+            <label>Cierra<input type="time" name="hora_cierre" value="21:00" step="1800"></label>
+          </div>
+          <button class="btn primario">Crear espacio</button>
+        </form>
+      </section>
+      <section class="tarjeta ancha">
+        <h3>Todas las reservas</h3>
+        <div class="tabla-scroll"><table id="tabla-reservas"><thead><tr>
+          <th>Espacio</th><th>Usuario</th><th>Fecha</th><th>Horario</th><th>Estado</th><th></th></tr></thead><tbody></tbody></table></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ============ MODAL RESERVA ============ -->
+  <dialog id="modal-reserva" class="modal">
+    <form id="form-reserva" class="form" method="dialog">
+      <h3 id="modal-titulo">Reservar</h3>
+      <p id="modal-detalle" class="sub"></p>
+      <label>Fecha<input type="date" name="fecha" required></label>
+      <div class="fila">
+        <label>Desde<select name="hora_inicio" required></select></label>
+        <label>Hasta<select name="hora_fin" required></select></label>
+      </div>
+      <label>Asistentes<input type="number" name="asistentes" min="1" value="1" required></label>
+      <label>Motivo (opcional)<input name="motivo" maxlength="200" placeholder="Ej. Estudio para parcial de cálculo"></label>
+      <div id="ocupacion-modal" class="ocupacion"></div>
+      <p id="reserva-error" class="error" role="alert"></p>
+      <div class="modal-acciones">
+        <button type="button" class="btn secundario" id="cerrar-modal">Cancelar</button>
+        <button type="submit" class="btn primario" value="ok">Confirmar reserva</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ============ CHAT ============ -->
+  <button id="chat-toggle" class="chat-toggle" aria-label="Abrir asistente">
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+  </button>
+  <section id="chat" class="chat oculto" aria-label="Asistente virtual">
+    <header class="chat-cab">
+      <div><b>Asistente ReservaCampus</b><small>Reglas + IA (Groq)</small></div>
+      <button id="chat-cerrar" class="icono" aria-label="Cerrar">✕</button>
+    </header>
+    <div id="chat-mensajes" class="chat-mensajes"></div>
+    <div id="chat-sugerencias" class="chat-sugerencias"></div>
+    <form id="chat-form" class="chat-form">
+      <input id="chat-input" maxlength="500" placeholder="Escribe tu pregunta…" autocomplete="off" required>
+      <button class="btn primario" aria-label="Enviar">➤</button>
+    </form>
+  </section>
+
+  <div id="toast" class="toast"></div>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
