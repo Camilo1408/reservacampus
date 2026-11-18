@@ -13,10 +13,17 @@ foreach ($a in $Archivos) {
     $doc = $word.Documents.Open($ruta, $false, $false)
     $doc.Fields.Update() | Out-Null
     foreach ($t in $doc.TablesOfContents) { $t.Update() }
-    $doc.Save()
-    $doc.ExportAsFixedFormat($pdf, 17)   # 17 = wdExportFormatPDF
+    try { $doc.Save() } catch {
+      # A veces Word rehúsa guardar sobre el original: se guarda en una copia temporal y se reemplaza.
+      $tmp = Join-Path $env:TEMP ("rc_" + $a)
+      $doc.SaveAs2($tmp, 16)
+      $doc.Close($false); $doc = $word.Documents.Open($tmp, $false, $false)
+      $copiar = $tmp
+    }
+    $doc.ExportAsFixedFormat($pdf, 17, $false, 0)   # 17 = wdExportFormatPDF
     Write-Output ("pdf: " + $pdf)
     try { $doc.Close($false) } catch { }
+    if ($copiar) { Copy-Item $copiar $ruta -Force; Remove-Item $copiar; $copiar = $null }
   } catch {
     Write-Output ("error en " + $a + ": " + $_.Exception.Message)
   } finally {

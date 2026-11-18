@@ -19,7 +19,7 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 AZUL, AZUL2, ROJO, VERDE, AMBAR, GRIS = "#3b4cca", "#9aa6f0", "#c8364a", "#17915a", "#ffb547", "#5d6480"
 plt.rcParams.update({"font.family": "Arial", "font.size": 11, "axes.spines.top": False, "axes.spines.right": False,
-                     "axes.titleweight": "bold", "axes.titlesize": 13, "figure.dpi": 150})
+                     "axes.titleweight": "bold", "axes.titlesize": 13, "figure.dpi": 150, "savefig.dpi": 300})
 ENDPOINTS = ["disponibilidad", "espacios", "mis_reservas", "login", "chat"]
 NOMBRE = {"disponibilidad": "GET /disponibilidad", "espacios": "GET /espacios", "mis_reservas": "GET /reservas/mias",
           "login": "POST /login", "chat": "POST /chat"}

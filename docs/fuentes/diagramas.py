@@ -272,14 +272,15 @@ HTML = """<!doctype html><html><head><meta charset="utf-8">
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script></head>
 <body><div id="d"><pre class="mermaid">%s</pre></div>
 <script>mermaid.initialize({startOnLoad:true, theme:'default', securityLevel:'loose',
- themeVariables:{fontFamily:'Arial', fontSize:'16px'}, flowchart:{htmlLabels:true, curve:'basis'}});</script></body></html>"""
+ themeVariables:{fontFamily:'Arial', fontSize:'16px'}, flowchart:{htmlLabels:true, curve:'basis', useMaxWidth:false},
+ sequence:{useMaxWidth:false}, er:{useMaxWidth:false}, state:{useMaxWidth:false}, gantt:{useMaxWidth:false}});</script></body></html>"""
 
 
 def main(solo=None):
     SALIDA.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as p:
         b = p.chromium.launch()
-        pg = b.new_page(device_scale_factor=2, viewport={"width": 1600, "height": 1200})
+        pg = b.new_page(device_scale_factor=3, viewport={"width": 2400, "height": 1200})
         for nombre, codigo in DIAGRAMAS.items():
             if solo and nombre not in solo:
                 continue

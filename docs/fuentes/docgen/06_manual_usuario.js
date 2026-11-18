@@ -1,4 +1,4 @@
-const { p, h1, h2, h3, vinetas, pasos, imagen, tabla, nota, portada, toc, generar, URLS } = require("./lib");
+const { D, p, h1, h2, h3, vinetas, pasos, imagen, tabla, nota, portada, toc, generar, URLS } = require("./lib");
 
 const C = (n) => `capturas/${n}.png`;
 
@@ -56,7 +56,9 @@ const contenido = [
   h1("3. Estudiante: reservar"),
   h2("3.1 Ver los espacios"),
   p("Al entrar verás todos los espacios. Cada tarjeta muestra el tipo, la capacidad, la ubicación, las **actividades** para las que sirve y una **barra del día**:"),
-  ...vinetas(["🟩 Verde: libre", "🟧 Naranja: clase fija", "🟥 Rojo: ya reservado"]),
+  ...[["17915A", "Verde: libre"], ["E8890C", "Naranja: clase fija"], ["D93636", "Rojo: ya reservado"]].map(([color, texto]) =>
+    new D.Paragraph({ numbering: { reference: "vinetas", level: 0 }, spacing: { after: 60, line: 276 },
+      children: [new D.TextRun({ text: "■ ", color, size: 26 }), new D.TextRun(texto)] })),
   imagen(C("e05_espacios"), "Espacios disponibles con su barra de ocupación", 600),
   h2("3.2 Filtrar por fecha o tipo"),
   ...pasos(["Cambia la **fecha** arriba a la derecha para ver otro día.", "Abre **Todos los tipos** y elige, por ejemplo, Laboratorios."]),

@@ -165,7 +165,7 @@ def capturar(datos):
     OUT.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as p:
         b = p.chromium.launch()
-        ctx = b.new_context(viewport={"width": 1366, "height": 800}, device_scale_factor=1.5, locale="es-CO")
+        ctx = b.new_context(viewport={"width": 1366, "height": 800}, device_scale_factor=2.5, locale="es-CO")
         pg = ctx.new_page()
         pg.clock.install(time=HORA_DEMO)
         pg.clock.resume()
@@ -277,7 +277,7 @@ def capturar(datos):
         foto("e18_cuenta_suspendida")
 
         # móvil
-        movil = b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, is_mobile=True, has_touch=True)
+        movil = b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=3, is_mobile=True, has_touch=True)
         pm = movil.new_page()
         pm.clock.install(time=HORA_DEMO)
         pm.clock.resume()
@@ -361,7 +361,7 @@ def capturar(datos):
         foto("a15_enlace_recuperacion", ".dialogo-confirmar")
         pg.locator(".dialogo-confirmar [data-r='0']").click()
 
-        pm2 = b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, is_mobile=True).new_page()
+        pm2 = b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=3, is_mobile=True).new_page()
         pm2.goto(BASE)
         pm2.fill("#form-login [name=email]", ADMIN[0])
         pm2.fill("#form-login [name=password]", ADMIN[1])

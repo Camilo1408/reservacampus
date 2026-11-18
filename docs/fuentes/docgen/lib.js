@@ -40,7 +40,10 @@ function runs(texto, base = {}) {
 }
 
 const p = (texto, op = {}) => new D.Paragraph({ children: runs(texto, op.run || {}), spacing: { after: 120, line: 288 }, alignment: op.centro ? D.AlignmentType.CENTER : op.justificar === false ? undefined : D.AlignmentType.JUSTIFIED, ...op.par });
-const h1 = (t) => new D.Paragraph({ heading: D.HeadingLevel.HEADING_1, children: [new D.TextRun(t)], pageBreakBefore: true });
+// Solo el primer capítulo (tras el índice) empieza en página nueva; los demás siguen a continuación para no dejar huecos.
+let capitulos = 0;
+const h1 = (t) => new D.Paragraph({ heading: D.HeadingLevel.HEADING_1, children: [new D.TextRun(t)], pageBreakBefore: capitulos++ === 0,
+  spacing: capitulos > 1 ? { before: 480, after: 160 } : undefined });
 const h1SinSalto = (t) => new D.Paragraph({ heading: D.HeadingLevel.HEADING_1, children: [new D.TextRun(t)] });
 const h2 = (t) => new D.Paragraph({ heading: D.HeadingLevel.HEADING_2, children: [new D.TextRun(t)] });
 const h3 = (t) => new D.Paragraph({ heading: D.HeadingLevel.HEADING_3, children: [new D.TextRun(t)] });
@@ -62,7 +65,7 @@ function imagen(ruta, pie, anchoPx = 600) {
   const abs = path.isAbsolute(ruta) ? ruta : path.join(IMG, ruta);
   const datos = fs.readFileSync(abs);
   const ancho = datos.readUInt32BE(16), alto = datos.readUInt32BE(20); // PNG IHDR
-  const maxAlto = 620;
+  const maxAlto = alto > ancho ? 360 : 430; // las capturas verticales (chat, móvil) más bajas para no empujar contenido
   let w = anchoPx, h = Math.round((alto / ancho) * anchoPx);
   if (h > maxAlto) { w = Math.round((maxAlto / h) * w); h = maxAlto; }
   const out = [new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: { before: 120, after: 60 }, keepNext: !!pie,
@@ -150,8 +153,7 @@ function portada({ titulo, subtitulo, entregable, version = "1.0" }) {
 
 function toc() {
   return [new D.Paragraph({ pageBreakBefore: true, children: [new D.TextRun({ text: "Contenido", bold: true, size: 32, color: "15192B" })], spacing: { after: 200 } }),
-    new D.TableOfContents("Contenido", { hyperlink: true, headingStyleRange: "1-2" }),
-    new D.Paragraph({ children: [new D.TextRun({ text: "Si el índice aparece vacío, en Word: clic derecho sobre él → Actualizar campos.", italics: true, size: 16, color: GRIS })] })];
+    new D.TableOfContents("Contenido", { hyperlink: true, headingStyleRange: "1-2" })];
 }
 
 // ---------------------------------------------------------------- documento
@@ -169,6 +171,8 @@ async function generar(nombreArchivo, tituloCorto, secciones) {
       paragraphStyles: [
         { id: "Heading1", name: "Heading 1", basedOn: "Normal", next: "Normal", quickFormat: true, ...estiloTitulo(34, AZUL_OSC, 240, 160), paragraph: { spacing: { before: 240, after: 160 }, keepNext: true, keepLines: true, outlineLevel: 0, border: { bottom: { style: D.BorderStyle.SINGLE, size: 8, color: AZUL, space: 4 } } } },
         { id: "Heading2", name: "Heading 2", basedOn: "Normal", next: "Normal", quickFormat: true, ...estiloTitulo(27, AZUL, 280, 120), paragraph: { spacing: { before: 280, after: 120 }, keepNext: true, keepLines: true, outlineLevel: 1 } },
+        { id: "TOC1", name: "toc 1", basedOn: "Normal", next: "Normal", run: { bold: true, size: 20 }, paragraph: { spacing: { before: 60, after: 20 } } },
+        { id: "TOC2", name: "toc 2", basedOn: "Normal", next: "Normal", run: { size: 19 }, paragraph: { spacing: { before: 0, after: 0 }, indent: { left: 300 } } },
         { id: "Heading3", name: "Heading 3", basedOn: "Normal", next: "Normal", quickFormat: true, ...estiloTitulo(23, "15192B", 200, 80), paragraph: { spacing: { before: 200, after: 80 }, keepNext: true, keepLines: true, outlineLevel: 2 } },
       ],
     },
@@ -186,7 +190,19 @@ async function generar(nombreArchivo, tituloCorto, secciones) {
   });
   const destino = path.join(RAIZ, "docs", "entregables", nombreArchivo);
   fs.mkdirSync(path.dirname(destino), { recursive: true });
-  fs.writeFileSync(destino, await D.Packer.toBuffer(doc));
+  // Word comprime las imágenes a 220 ppi al guardar/exportar: se desactiva para que no se pixelen al hacer zoom.
+  const JSZip = require(require.resolve("jszip", { paths: [path.dirname(require.resolve("docx"))] }));
+  const zip = await JSZip.loadAsync(await D.Packer.toBuffer(doc));
+  let ajustes = await zip.file("word/settings.xml").async("string");
+  if (!ajustes.includes("doNotAutoCompressPictures")) {
+    ajustes = /<w:clrSchemeMapping[^>]*\/>/.test(ajustes)
+      ? ajustes.replace(/(<w:clrSchemeMapping[^>]*\/>)/, "$1<w:doNotAutoCompressPictures/>")
+      : ajustes.replace("</w:settings>", "<w:doNotAutoCompressPictures/></w:settings>");
+    zip.file("word/settings.xml", ajustes);
+  }
+  const limpio = new JSZip(); // sin entradas de carpeta (Word las rechaza en servicios en la nube)
+  for (const [nombre, f] of Object.entries(zip.files)) if (!f.dir) limpio.file(nombre, await f.async("nodebuffer"));
+  fs.writeFileSync(destino, await limpio.generateAsync({ type: "nodebuffer", compression: "DEFLATE" }));
   console.log("docx:", destino);
 }
 

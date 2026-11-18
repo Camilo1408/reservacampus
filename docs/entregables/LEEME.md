@@ -34,5 +34,6 @@ python docs/fuentes/diagramas.py           # diagramas (Mermaid -> PNG)
 python docs/fuentes/capturas.py            # capturas de pantalla (Playwright)
 python docs/fuentes/graficos.py            # gráficos del informe (k6, cobertura, OWASP)
 node docs/fuentes/docgen/01_arquitectura.js   # ... y los demás 0X_*.js  (NODE_PATH con el paquete docx)
-powershell -File docs/fuentes/docgen/a_pdf.ps1   # Word -> PDF
+powershell -ExecutionPolicy Bypass -File docs/fuentes/docgen/a_pdf.ps1   # Word -> PDF
+python docs/fuentes/docgen/pdf_alta_resolucion.py  # reemplaza las imágenes del PDF por las originales (sin pixelado)
 ```
