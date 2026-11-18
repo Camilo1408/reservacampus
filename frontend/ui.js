@@ -118,6 +118,42 @@
     Object.defineProperty(input, "files", { get() { return desc.get.call(this); }, set(v) { desc.set.call(this, v); pintar(); } });
   }
 
+  // Botón para mostrar/ocultar contraseñas
+  const ojo = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>`;
+  const ojoTachado = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.2A10.4 10.4 0 0 1 12 4c6.4 0 10 8 10 8a17.6 17.6 0 0 1-2.2 3.2M6.6 6.6C3.8 8.5 2 12 2 12s3.6 8 10 8a9.7 9.7 0 0 0 5.4-1.6"/><path d="M14.1 14.1a3 3 0 0 1-4.2-4.2"/><path d="m2 2 20 20"/></svg>`;
+
+  function mejorarPassword(input) {
+    if (input._pass) return;
+    const caja = document.createElement("span");
+    caja.className = "pass-caja";
+    input.before(caja);
+    caja.append(input);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "pass-toggle";
+    caja.append(btn);
+    input._pass = btn;
+    const pintar = () => {
+      const visible = input.type === "text";
+      btn.innerHTML = visible ? ojoTachado : ojo;
+      btn.setAttribute("aria-label", visible ? "Ocultar contraseña" : "Mostrar contraseña");
+      btn.title = visible ? "Ocultar contraseña" : "Mostrar contraseña";
+      btn.setAttribute("aria-pressed", String(visible));
+    };
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      const pos = input.selectionStart;
+      input.type = input.type === "password" ? "text" : "password";
+      pintar();
+      input.focus();
+      try { input.setSelectionRange(pos, pos); } catch { /* algunos tipos no lo permiten */ }
+    });
+    // Al reiniciar el formulario o enviarlo, la contraseña vuelve a quedar oculta
+    input.form?.addEventListener("reset", () => { input.type = "password"; pintar(); });
+    input.form?.addEventListener("submit", () => { input.type = "password"; pintar(); });
+    pintar();
+  }
+
   // Diálogo de confirmación con estilo propio (reemplaza window.confirm)
   function confirmar({ titulo = "¿Estás seguro?", mensaje = "", aceptar = "Confirmar", cancelar = "Cancelar", peligro = false } = {}) {
     return new Promise((resolver) => {
@@ -200,6 +236,7 @@
     mejorar(raiz = document) {
       raiz.querySelectorAll("select").forEach(mejorarSelect);
       raiz.querySelectorAll('input[type="file"]').forEach(mejorarArchivo);
+      raiz.querySelectorAll('input[type="password"]').forEach(mejorarPassword);
     },
   };
   document.addEventListener("DOMContentLoaded", () => window.UI.mejorar());

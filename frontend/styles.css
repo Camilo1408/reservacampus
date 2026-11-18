@@ -299,6 +299,17 @@ input::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 .incidencias-cols { display: grid; gap: 1.2rem; }
 .celda-texto { white-space: normal !important; min-width: 200px; max-width: 320px; }
 
+/* ---------- mostrar/ocultar contraseña ---------- */
+.pass-caja { position: relative; display: block; min-width: 0; }
+.pass-caja input { padding-right: 2.9rem; }
+.pass-toggle { position: absolute; top: 50%; right: 6px; transform: translateY(-50%); width: 34px; height: 34px;
+  display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: var(--suave);
+  cursor: pointer; transition: background .15s, color .15s; }
+.pass-toggle:hover { background: #f2f4fd; color: var(--primario); }
+.pass-toggle:focus-visible { outline: 2px solid color-mix(in srgb, var(--primario) 40%, transparent); color: var(--primario); }
+.pass-toggle[aria-pressed="true"] { color: var(--primario); }
+input::-ms-reveal, input::-ms-clear { display: none; }  /* evita el ojo nativo de Edge duplicado */
+
 @media (max-width: 860px) {
   .auth, .horarios-cols { grid-template-columns: 1fr; }
   .auth { gap: 1.5rem; }

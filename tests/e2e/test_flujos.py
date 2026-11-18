@@ -253,3 +253,18 @@ def test_chatbot_reconoce_espacio_nuevo_creado_por_admin(pagina):
     expect(r).to_contain_text(nombre)
     r = preguntar("quiero jugar ajedrez mañana")
     expect(r).to_contain_text(nombre)
+
+
+def test_mostrar_y_ocultar_contrasena(pagina):
+    campo = pagina.locator("#form-login [name=password]")
+    boton = pagina.locator("#form-login .pass-toggle")
+    campo.fill("Secreta123")
+    expect(campo).to_have_attribute("type", "password")
+    boton.click()
+    expect(campo).to_have_attribute("type", "text")
+    expect(boton).to_have_attribute("aria-label", "Ocultar contraseña")
+    expect(campo).to_have_value("Secreta123")  # no se pierde lo escrito
+    boton.click()
+    expect(campo).to_have_attribute("type", "password")
+    # todos los campos de contraseña tienen su botón
+    assert pagina.locator("input[name^=password]").count() == pagina.locator(".pass-toggle").count()
