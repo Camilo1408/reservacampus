@@ -90,6 +90,9 @@ input:focus, select:focus, textarea:focus { outline: 2px solid color-mix(in srgb
 .chip.laboratorio { background: #e8f4ff; color: #1769aa; }
 .chip.auditorio { background: #fff3e0; color: #b25e00; }
 .chip.cancha { background: var(--ok-bg); color: var(--ok); }
+.chip.recreacion { background: #f3e8ff; color: #7b2cbf; }
+.tags { display: flex; flex-wrap: wrap; gap: .3rem; }
+.tags span { font-size: .75rem; background: #f2f4fd; color: var(--suave); padding: .15rem .5rem; border-radius: 99px; }
 .meta { display: flex; gap: 1rem; flex-wrap: wrap; color: var(--suave); font-size: .88rem; }
 .desc { color: var(--suave); font-size: .92rem; margin: 0; }
 .barra-dia { position: relative; height: 10px; background: var(--ok-bg); border-radius: 99px; overflow: hidden; }

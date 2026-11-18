@@ -11,10 +11,12 @@ class Espacio(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     nombre: Mapped[str] = mapped_column(String(80), unique=True)
-    tipo: Mapped[str] = mapped_column(String(30))  # sala_estudio | laboratorio | auditorio | cancha
+    tipo: Mapped[str] = mapped_column(String(30))  # sala_estudio | laboratorio | auditorio | cancha | recreacion
     capacidad: Mapped[int] = mapped_column(Integer)
     ubicacion: Mapped[str] = mapped_column(String(120))
     descripcion: Mapped[str] = mapped_column(String(300), default="")
+    # Actividades permitidas, separadas por coma (p. ej. "videojuegos, juegos de mesa"). Las usa el chatbot.
+    actividades: Mapped[str] = mapped_column(String(300), default="")
     hora_apertura: Mapped[time] = mapped_column(Time, default=time(7, 0))
     hora_cierre: Mapped[time] = mapped_column(Time, default=time(21, 0))
     activo: Mapped[bool] = mapped_column(Boolean, default=True)

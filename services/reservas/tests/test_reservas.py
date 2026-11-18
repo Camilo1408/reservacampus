@@ -157,3 +157,11 @@ def test_editar_espacio(client):
     e.update(capacidad=8, nombre="Sala A-101 Renovada")
     r = client.put("/espacios/1", json=e, headers=adm)
     assert r.status_code == 200 and r.json()["capacidad"] == 8
+
+
+def test_espacio_recreativo_con_actividades(client):
+    nuevo = {"nombre": "Sala Gamer", "tipo": "recreacion", "capacidad": 12, "ubicacion": "Bienestar, piso 2",
+             "actividades": "videojuegos, juegos de mesa"}
+    r = client.post("/espacios", json=nuevo, headers=token(99, "admin"))
+    assert r.status_code == 201 and r.json()["actividades"] == "videojuegos, juegos de mesa"
+    assert any(e["nombre"] == "Sala Gamer" for e in client.get("/espacios", params={"tipo": "recreacion"}).json())

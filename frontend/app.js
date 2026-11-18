@@ -2,7 +2,7 @@
 const C = window.CONFIG;
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
-const TIPOS = { sala_estudio: "Sala de estudio", laboratorio: "Laboratorio", auditorio: "Auditorio", cancha: "Cancha" };
+const TIPOS = { sala_estudio: "Sala de estudio", laboratorio: "Laboratorio", auditorio: "Auditorio", cancha: "Cancha", recreacion: "Sala recreativa" };
 
 const estado = {
   token: sessionStorage.getItem("token"),
@@ -137,6 +137,7 @@ async function cargarEspacios() {
         <div class="espacio-cab"><h3>${escapar(e.nombre)}</h3><span class="chip ${e.tipo}">${TIPOS[e.tipo]}</span></div>
         <div class="meta"><span>👥 ${e.capacidad} personas</span><span>📍 ${escapar(e.ubicacion)}</span></div>
         <p class="desc">${escapar(e.descripcion || "")}</p>
+        ${e.actividades ? `<div class="tags">${e.actividades.split(",").map((a) => a.trim()).filter(Boolean).map((a) => `<span>${escapar(a)}</span>`).join("")}</div>` : ""}
         <div><div class="barra-dia">${bloques}</div>
           <div class="leyenda"><span>${hhmm(e.hora_apertura)}</span><span>${ocupado.length ? `${ocupado.filter((o) => o.tipo === "clase").length} clase(s) · ${ocupado.filter((o) => o.tipo !== "clase").length} reserva(s)` : "Libre todo el día"}</span><span>${hhmm(e.hora_cierre)}</span></div></div>
         <button class="btn primario" data-reservar="${e.id}">Reservar</button>
@@ -311,7 +312,7 @@ $("#form-revocar").addEventListener("submit", async (e) => {
 function pintarEspaciosAdmin() {
   $("#tabla-espacios tbody").innerHTML = admin.espacios.map((e) => `<tr>
       <td data-label="Nombre"><b>${escapar(e.nombre)}</b></td>
-      <td data-label="Tipo">${TIPOS[e.tipo]}</td>
+      <td data-label="Tipo"><span>${TIPOS[e.tipo]}${e.actividades ? `<br><small>${escapar(e.actividades)}</small>` : ""}</span></td>
       <td data-label="Capacidad">${e.capacidad}</td>
       <td data-label="Ubicación">${escapar(e.ubicacion)}</td>
       <td data-label="Horario">${hhmm(e.hora_apertura)}–${hhmm(e.hora_cierre)}</td>
@@ -334,7 +335,7 @@ function abrirEspacio(id = null) {
   $("#titulo-espacio").textContent = id ? "Editar espacio" : "Nuevo espacio";
   if (id) {
     const e = admin.espacios.find((x) => x.id === id);
-    ["nombre", "tipo", "capacidad", "ubicacion", "descripcion"].forEach((k) => (f[k].value = e[k] ?? ""));
+    ["nombre", "tipo", "capacidad", "ubicacion", "descripcion", "actividades"].forEach((k) => (f[k].value = e[k] ?? ""));
     f.hora_apertura.value = hhmm(e.hora_apertura);
     f.hora_cierre.value = hhmm(e.hora_cierre);
     f.activo.checked = e.activo;
@@ -347,7 +348,7 @@ $("#form-espacio").addEventListener("submit", async (ev) => {
   const f = ev.target;
   const body = {
     nombre: f.nombre.value, tipo: f.tipo.value, capacidad: +f.capacidad.value, ubicacion: f.ubicacion.value,
-    descripcion: f.descripcion.value, hora_apertura: f.hora_apertura.value, hora_cierre: f.hora_cierre.value, activo: f.activo.checked,
+    descripcion: f.descripcion.value, actividades: f.actividades.value, hora_apertura: f.hora_apertura.value, hora_cierre: f.hora_cierre.value, activo: f.activo.checked,
   };
   try {
     await api(C.RESERVAS_URL, espacioEditando ? `/espacios/${espacioEditando}` : "/espacios", { method: espacioEditando ? "PUT" : "POST", body });

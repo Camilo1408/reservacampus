@@ -9,7 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from . import config, ia
-from .reglas import NOMBRE_TIPO, actividad_no_disponible, detectar, menciona_jugar, extraer_fecha, extraer_hora, extraer_personas, extraer_tipo, franjas_libres
+from .actividades import TIPOS as TIPOS_ESPACIO, detectar_actividad, etiqueta_mencionada, menciona_jugar, resumen_oferta, sirve_para
+from .reglas import detectar, extraer_fecha, extraer_hora, extraer_personas, franjas_libres
 
 app = FastAPI(
     title="Chatbot Service · ReservaCampus",
@@ -19,7 +20,8 @@ app = FastAPI(
 )
 app.add_middleware(CORSMiddleware, allow_origins=config.CORS_ORIGINS, allow_methods=["*"], allow_headers=["*"])
 
-TIPOS = {"sala_estudio": "Sala de estudio", "laboratorio": "Laboratorio", "auditorio": "Auditorio", "cancha": "Cancha"}
+TIPOS = {"sala_estudio": "Sala de estudio", "laboratorio": "Laboratorio", "auditorio": "Auditorio", "cancha": "Cancha",
+         "recreacion": "Sala recreativa"}
 _uso: dict[str, deque] = defaultdict(deque)
 
 
@@ -74,47 +76,50 @@ def _ocupacion_texto(ocupado: list[dict]) -> str:
                      + (f" ({o['etiqueta']})" if o.get("tipo") == "clase" else " (reservado)") for o in ocupado)
 
 
-def responder_actividad_no_disponible(actividad: str) -> ChatOut:
-    return ChatOut(
-        respuesta=f"❌ No hay espacios para {actividad} en ReservaCampus. Los espacios son para actividades "
-                  "académicas y deportivas:\n"
-                  "• **Salas de estudio**: estudiar, reuniones y trabajos en grupo\n"
-                  "• **Laboratorios**: prácticas de computación y redes\n"
-                  "• **Auditorio**: eventos y conferencias\n"
-                  "• **Cancha**: fútbol, baloncesto y voleibol",
-        fuente="reglas", intencion="actividad_no_disponible",
-        sugerencias=["¿Hay cancha para fútbol hoy?", "¿Qué salas de estudio están libres?"])
-
-
-async def responder_disponibilidad(mensaje: str) -> ChatOut:
+async def responder_disponibilidad(mensaje: str, forzar: bool = False) -> ChatOut:
+    """Disponibilidad filtrada por la actividad que el usuario quiere hacer, usando los espacios reales."""
     ahora = datetime.now(config.ZONA)
     hoy = ahora.date()
     fecha = extraer_fecha(mensaje, hoy)
     hora = extraer_hora(mensaje)
-    tipo = extraer_tipo(mensaje)
     personas = extraer_personas(mensaje)
-    if not tipo and menciona_jugar(mensaje):
-        return ChatOut(respuesta="¿Qué quieres jugar? 🙂 Para deportes como fútbol, baloncesto o voleibol tenemos "
-                                 "la **Cancha Múltiple**. Para otro tipo de juegos (como videojuegos) no hay espacios "
-                                 "en la plataforma.", fuente="reglas", intencion="disponibilidad",
-                       sugerencias=["¿Hay cancha para fútbol hoy?", "¿Hay cancha para baloncesto mañana?"])
     params = {"fecha": fecha.isoformat()}
-    if tipo:
-        params["tipo"] = tipo
     if hora:
         fin = (datetime.combine(fecha, hora) + timedelta(hours=1)).time()
         params |= {"hora_inicio": hora.strftime("%H:%M"), "hora_fin": fin.strftime("%H:%M")}
-    datos = await api_reservas("/disponibilidad", params)
+    todos = await api_reservas("/disponibilidad", params)
+    espacios = [d["espacio"] for d in todos]
+
+    actividad = detectar_actividad(mensaje)
+    tag = etiqueta_mencionada(mensaje, espacios)
+    que_busca = tag or (actividad.nombre if actividad else None)
+    if que_busca:
+        datos = [d for d in todos if sirve_para(d["espacio"], actividad, tag)]
+        if not datos:
+            return ChatOut(
+                respuesta=f"Por ahora no hay espacios para **{que_busca}** en ReservaCampus. "
+                          f"Estos son los espacios que existen actualmente:\n{resumen_oferta(espacios)}\n"
+                          "Si crees que hace falta uno, puedes sugerirlo a soporte@reservacampus.edu.",
+                fuente="reglas", intencion="sin_espacio_para_actividad",
+                sugerencias=["¿Qué espacios hay?", "¿Hay cancha para fútbol hoy?"])
+    elif menciona_jugar(mensaje):
+        recreativos = [e for e in espacios if e.get("tipo") in ("cancha", "recreacion")]
+        opciones = "\n".join(f"• **{e['nombre']}**: {e.get('actividades') or e.get('descripcion', '')}"
+                             for e in recreativos) or "• (no hay espacios recreativos ni deportivos registrados)"
+        return ChatOut(respuesta=f"¿Qué quieres jugar? 🙂 Estos son los espacios para jugar que existen:\n{opciones}",
+                       fuente="reglas", intencion="disponibilidad",
+                       sugerencias=["¿Hay cancha para fútbol hoy?"])
+    else:
+        datos = todos
+
     if personas:
         datos = [d for d in datos if d["espacio"]["capacidad"] >= personas]
-
-    que = NOMBRE_TIPO.get(tipo, "espacios")
+    que = f"espacios para {que_busca}" if que_busca else "espacios"
     para = f" para {personas} personas" if personas else ""
     cuando = fecha_texto(fecha)
     sugerencias = ["¿Cómo reservo?", "¿Cuáles son las reglas?"]
-
     if not datos:
-        return ChatOut(respuesta=f"No hay {que} disponibles{para} en la plataforma. Prueba con otro tipo de espacio.",
+        return ChatOut(respuesta=f"No hay {que} con capacidad{para}. Prueba con un grupo más pequeño.",
                        fuente="reglas", intencion="disponibilidad", sugerencias=["¿Qué espacios hay?"])
 
     # Con hora concreta: respuesta directa sí/no
@@ -122,16 +127,15 @@ async def responder_disponibilidad(mensaje: str) -> ChatOut:
         rango = f"{cuando} de {hora:%H:%M} a {fin:%H:%M}"
         libres = [d for d in datos if d["libre"]]
         if libres:
-            lineas = [f"• {d['espacio']['nombre']} ({d['espacio']['capacidad']} personas, {d['espacio']['ubicacion']})"
-                      for d in libres]
+            lineas = [f"• **{d['espacio']['nombre']}** ({d['espacio']['capacidad']} personas, "
+                      f"{d['espacio']['ubicacion']})" for d in libres]
             return ChatOut(respuesta=f"✅ Sí, hay {que} libres {rango}{para}:\n" + "\n".join(lineas),
                            fuente="reglas", intencion="disponibilidad", sugerencias=sugerencias)
         lineas = [f"• {d['espacio']['nombre']}: {_ocupacion_texto(d['ocupado']) or 'fuera de su horario'}"
                   for d in datos]
         return ChatOut(respuesta=f"❌ No hay {que} libres {rango}{para}.\n" + "\n".join(lineas) +
                        "\nPrueba con otra hora o pregúntame qué está libre ese día.",
-                       fuente="reglas", intencion="disponibilidad",
-                       sugerencias=[f"¿Qué {que} están libres {cuando}?"])
+                       fuente="reglas", intencion="disponibilidad", sugerencias=[f"¿Qué está libre {cuando}?"])
 
     # Sin hora: franjas libres por espacio (si es hoy, desde la hora actual)
     desde = ahora.hour * 60 + ahora.minute if fecha == hoy else 0
@@ -140,8 +144,8 @@ async def responder_disponibilidad(mensaje: str) -> ChatOut:
         e = d["espacio"]
         huecos = franjas_libres(e["hora_apertura"][:5], e["hora_cierre"][:5], d["ocupado"], desde)
         if huecos:
-            texto = ", ".join(f"{a}-{b}" for a, b in huecos)
-            con_hueco.append(f"• **{e['nombre']}** ({e['capacidad']} personas): libre {texto}")
+            con_hueco.append(f"• **{e['nombre']}** ({e['capacidad']} personas): libre "
+                             + ", ".join(f"{a}-{b}" for a, b in huecos))
         else:
             sin_hueco.append(e["nombre"])
     if not con_hueco:
@@ -183,10 +187,22 @@ def health():
 @app.post("/chat", response_model=ChatOut, tags=["chat"])
 async def chat(datos: ChatIn, request: Request, authorization: str | None = Header(default=None)):
     limitar(request.client.host if request.client else "desconocido")
-    no_disponible = actividad_no_disponible(datos.mensaje)
-    if no_disponible:
-        return responder_actividad_no_disponible(no_disponible)
+    # Si menciona una actividad (conocida o definida por el admin en un espacio), se responde con los
+    # espacios reales que sirven para ella, salvo que la intención sea otra acción (cancelar, mis reservas...)
+    mencion_actividad = detectar_actividad(datos.mensaje) or menciona_jugar(datos.mensaje)
     intencion = detectar(datos.mensaje)
+    if not mencion_actividad and (not intencion or intencion.nombre in ("disponibilidad", "tipos")):
+        try:
+            mencion_actividad = bool(etiqueta_mencionada(datos.mensaje, await listado_espacios()))
+        except Exception:
+            mencion_actividad = False
+    if mencion_actividad and (not intencion or intencion.nombre in ("disponibilidad", "tipos", "como_reservar",
+                                                                    "saludo")):
+        try:
+            return await responder_disponibilidad(datos.mensaje)
+        except httpx.HTTPError:
+            return ChatOut(respuesta="No pude consultar el servicio de reservas en este momento. Intenta de nuevo "
+                                     "en unos segundos.", fuente="respaldo", intencion="disponibilidad")
     try:
         if intencion:
             if intencion.nombre == "disponibilidad":
@@ -200,7 +216,8 @@ async def chat(datos: ChatIn, request: Request, authorization: str | None = Head
                     texto = "Horarios de atención:\n" + "\n".join(lineas)
                 else:
                     lineas = [f"• {e['nombre']} — {TIPOS.get(e['tipo'], e['tipo'])}, {e['capacidad']} personas, "
-                              f"{e['ubicacion']}" for e in espacios]
+                              f"{e['ubicacion']}" + (f". Para: {e['actividades']}" if e.get("actividades") else "")
+                              for e in espacios]
                     texto = "Estos son los espacios que puedes reservar:\n" + "\n".join(lineas)
                 return ChatOut(respuesta=texto, fuente="reglas", intencion=intencion.nombre,
                                sugerencias=["¿Qué espacios están libres hoy?"])
@@ -213,7 +230,8 @@ async def chat(datos: ChatIn, request: Request, authorization: str | None = Head
     # Sin regla aplicable -> IA (Groq)
     espacios = await listado_espacios()
     espacios_txt = "\n".join(f"- {e['nombre']} ({TIPOS.get(e['tipo'], e['tipo'])}, {e['capacidad']} personas, "
-                             f"{e['ubicacion']}, {e['hora_apertura'][:5]}-{e['hora_cierre'][:5]})"
+                             f"{e['ubicacion']}, {e['hora_apertura'][:5]}-{e['hora_cierre'][:5]}"
+                             + (f"; actividades: {e['actividades']}" if e.get("actividades") else "") + ")"
                              for e in espacios) or "(no disponible)"
     respuesta = await ia.preguntar(datos.mensaje, [h.model_dump() for h in datos.historial], espacios_txt)
     if respuesta:

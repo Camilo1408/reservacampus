@@ -216,3 +216,40 @@ def test_sin_desborde_horizontal_en_movil(pagina):
         assert ancho <= 375, f"La pestaña {sub} desborda: {ancho}px"
     pagina.click("#btn-nuevo-horario")
     assert pagina.evaluate("document.documentElement.scrollWidth") <= 375
+
+
+def test_chatbot_reconoce_espacio_nuevo_creado_por_admin(pagina):
+    iniciar_sesion(pagina, *ADMIN)
+
+    def preguntar(texto):
+        pagina.fill("#chat-input", texto)
+        pagina.press("#chat-input", "Enter")
+        return pagina.locator(".msg.bot").last
+
+    pagina.click("#chat-toggle")
+    nombre = f"Sala Gamer {unico('')}"
+    # Antes de crearla: no hay espacio para videojuegos (y no ofrece la cancha)
+    r = preguntar("y para jugar video juegos")
+    expect(r).to_contain_text("no hay espacios para")
+    expect(r).not_to_contain_text("✅")
+    pagina.click("#chat-cerrar")
+
+    # El admin crea la sala recreativa con sus actividades
+    ir_admin(pagina, "espacios")
+    pagina.click("#btn-nuevo-espacio")
+    f = pagina.locator("#form-espacio")
+    f.locator("[name=nombre]").fill(nombre)
+    elegir(pagina, "#form-espacio [name=tipo]", "Sala recreativa")
+    f.locator("[name=capacidad]").fill("12")
+    f.locator("[name=ubicacion]").fill("Bienestar, piso 2")
+    f.locator("[name=actividades]").fill("videojuegos, juegos de mesa")
+    f.locator("button[type=submit]").click()
+    expect(pagina.locator("#tabla-espacios tr", has_text=nombre)).to_contain_text("videojuegos")
+
+    # Ahora el asistente la recomienda
+    pagina.click("#chat-toggle")
+    r = preguntar("y para jugar video juegos mañana")
+    expect(r).to_contain_text("✅ Sí, hay espacios para videojuegos")
+    expect(r).to_contain_text(nombre)
+    r = preguntar("quiero jugar ajedrez mañana")
+    expect(r).to_contain_text(nombre)

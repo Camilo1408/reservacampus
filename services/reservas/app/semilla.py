@@ -3,19 +3,19 @@ from datetime import time
 
 ESPACIOS_INICIALES = [
     dict(nombre="Sala de Estudio A-101", tipo="sala_estudio", capacidad=6, ubicacion="Biblioteca, piso 1",
-         descripcion="Mesa para 6, tablero y TV para presentaciones."),
+         descripcion="Mesa para 6, tablero y TV para presentaciones.", actividades="estudiar, trabajos en grupo, reuniones"),
     dict(nombre="Sala de Estudio A-102", tipo="sala_estudio", capacidad=4, ubicacion="Biblioteca, piso 1",
-         descripcion="Sala pequeña y silenciosa."),
+         descripcion="Sala pequeña y silenciosa.", actividades="estudiar, lectura"),
     dict(nombre="Sala de Estudio B-201", tipo="sala_estudio", capacidad=10, ubicacion="Biblioteca, piso 2",
-         descripcion="Sala grupal con videobeam."),
+         descripcion="Sala grupal con videobeam.", actividades="estudiar, trabajos en grupo, exposiciones, reuniones"),
     dict(nombre="Laboratorio de Cómputo 1", tipo="laboratorio", capacidad=30, ubicacion="Bloque C, piso 3",
-         descripcion="30 equipos con Python, Docker y VS Code.", hora_apertura=time(7, 0), hora_cierre=time(20, 0)),
+         descripcion="30 equipos con Python, Docker y VS Code.", actividades="programación, prácticas de computación", hora_apertura=time(7, 0), hora_cierre=time(20, 0)),
     dict(nombre="Laboratorio de Redes", tipo="laboratorio", capacidad=20, ubicacion="Bloque C, piso 2",
-         descripcion="Switches, routers y racks para prácticas.", hora_apertura=time(8, 0), hora_cierre=time(18, 0)),
+         descripcion="Switches, routers y racks para prácticas.", actividades="prácticas de redes", hora_apertura=time(8, 0), hora_cierre=time(18, 0)),
     dict(nombre="Auditorio Principal", tipo="auditorio", capacidad=200, ubicacion="Bloque A",
-         descripcion="Sonido, proyector y tarima.", hora_apertura=time(8, 0), hora_cierre=time(20, 0)),
+         descripcion="Sonido, proyector y tarima.", actividades="eventos, conferencias, seminarios", hora_apertura=time(8, 0), hora_cierre=time(20, 0)),
     dict(nombre="Cancha Múltiple", tipo="cancha", capacidad=24, ubicacion="Zona deportiva",
-         descripcion="Fútbol sala, baloncesto y voleibol.", hora_apertura=time(6, 0), hora_cierre=time(22, 0)),
+         descripcion="Fútbol sala, baloncesto y voleibol.", actividades="fútbol, baloncesto, voleibol", hora_apertura=time(6, 0), hora_cierre=time(22, 0)),
 ]
 
 # dia: 0 = lunes ... 5 = sábado

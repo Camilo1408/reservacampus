@@ -35,6 +35,9 @@ COLUMNAS_NUEVAS = {
         "aviso_inicio": "BOOLEAN DEFAULT FALSE NOT NULL",
         "aviso_final": "BOOLEAN DEFAULT FALSE NOT NULL",
     },
+    "espacios": {
+        "actividades": "VARCHAR(300) DEFAULT '' NOT NULL",
+    },
 }
 
 
@@ -57,6 +60,12 @@ def sembrar():
         if not db.scalar(select(func.count(Espacio.id))):
             db.add_all(Espacio(**e) for e in ESPACIOS_INICIALES)
             db.commit()
+        # Espacios iniciales creados antes de existir el campo "actividades": completarlo una sola vez
+        semilla = {e["nombre"]: e.get("actividades", "") for e in ESPACIOS_INICIALES}
+        for e in db.scalars(select(Espacio).where(Espacio.actividades == "")):
+            if semilla.get(e.nombre):
+                e.actividades = semilla[e.nombre]
+        db.commit()
         if not db.scalar(select(func.count(HorarioClase.id))):
             por_nombre = {e.nombre: e.id for e in db.scalars(select(Espacio))}
             for h in HORARIOS_INICIALES:

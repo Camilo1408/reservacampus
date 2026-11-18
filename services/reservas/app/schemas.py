@@ -3,7 +3,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-TipoEspacio = Literal["sala_estudio", "laboratorio", "auditorio", "cancha"]
+TipoEspacio = Literal["sala_estudio", "laboratorio", "auditorio", "cancha", "recreacion"]
 
 
 def _limpiar(v: str) -> str:
@@ -16,11 +16,12 @@ class EspacioIn(BaseModel):
     capacidad: int = Field(ge=1, le=1000)
     ubicacion: str = Field(min_length=2, max_length=120)
     descripcion: str = Field(default="", max_length=300)
+    actividades: str = Field(default="", max_length=300)
     hora_apertura: time = time(7, 0)
     hora_cierre: time = time(21, 0)
     activo: bool = True
 
-    limpiar_texto = field_validator("nombre", "ubicacion", "descripcion")(classmethod(lambda cls, v: _limpiar(v)))
+    limpiar_texto = field_validator("nombre", "ubicacion", "descripcion", "actividades")(classmethod(lambda cls, v: _limpiar(v)))
 
     @model_validator(mode="after")
     def horario_valido(self):

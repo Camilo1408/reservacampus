@@ -80,6 +80,7 @@
           <option value="laboratorio">Laboratorios</option>
           <option value="auditorio">Auditorios</option>
           <option value="cancha">Canchas</option>
+          <option value="recreacion">Salas recreativas</option>
         </select>
       </div>
     </div>
@@ -250,11 +251,14 @@
       <div class="fila">
         <label>Tipo<select name="tipo">
           <option value="sala_estudio">Sala de estudio</option><option value="laboratorio">Laboratorio</option>
-          <option value="auditorio">Auditorio</option><option value="cancha">Cancha</option></select></label>
+          <option value="auditorio">Auditorio</option><option value="cancha">Cancha</option>
+          <option value="recreacion">Sala recreativa</option></select></label>
         <label>Capacidad<input type="number" name="capacidad" min="1" max="1000" required value="6"></label>
       </div>
       <label>Ubicación<input name="ubicacion" required minlength="2" maxlength="120"></label>
       <label>Descripción<input name="descripcion" maxlength="300"></label>
+      <label>Actividades permitidas<input name="actividades" maxlength="300" placeholder="Ej. videojuegos, juegos de mesa">
+        <small>Sepáralas con comas. El asistente las usa para recomendar este espacio.</small></label>
       <div class="fila">
         <label>Abre<input type="time" name="hora_apertura" value="07:00" step="1800" required></label>
         <label>Cierra<input type="time" name="hora_cierre" value="21:00" step="1800" required></label>
