@@ -9,7 +9,7 @@ envVarGroups:
       - key: APP_TZ
         value: America/Bogota
       - key: CORS_ORIGINS
-        value: https://reservacampus-web.onrender.com
+        value: https://reservacampus-web-gcr3.onrender.com
 
 databases:
   - name: reservacampus-db
@@ -82,7 +82,7 @@ services:
     envVars:
       - fromGroup: reservacampus-comun
       - key: RESERVAS_URL
-        value: https://reservacampus-reservas.onrender.com
+        value: https://reservacampus-reservas-gcr3.onrender.com
       - key: GROQ_MODEL
         value: openai/gpt-oss-20b
       - key: GROQ_API_KEY
@@ -96,10 +96,10 @@ services:
     staticPublishPath: .
     envVars:
       - key: AUTH_URL
-        value: https://reservacampus-auth.onrender.com
+        value: https://reservacampus-auth-gcr3.onrender.com
       - key: RESERVAS_URL
-        value: https://reservacampus-reservas.onrender.com
+        value: https://reservacampus-reservas-gcr3.onrender.com
       - key: NOTIF_URL
-        value: https://reservacampus-notificaciones.onrender.com
+        value: https://reservacampus-notificaciones-gcr3.onrender.com
       - key: CHAT_URL
-        value: https://reservacampus-chatbot.onrender.com
+        value: https://reservacampus-chatbot-gcr3.onrender.com
