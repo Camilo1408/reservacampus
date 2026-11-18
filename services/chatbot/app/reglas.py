@@ -140,8 +140,8 @@ def ahora_local(zona) -> datetime:
 
 # ---------------------------------------------------------------- qué tipo de espacio busca el usuario
 ACTIVIDADES = {
-    "cancha": ["futbol", "baloncesto", "basket", "voleibol", "voley", "microfutbol", "deporte", "jugar",
-               "partido", "cancha", "entrenar", "ejercicio"],
+    "cancha": ["futbol", "baloncesto", "basket", "basquet", "voleibol", "voley", "microfutbol", "deporte",
+               "partido de", "cancha", "entrenar", "ejercicio", "balon", "pelota", "fut sala", "futsal"],
     "laboratorio": ["laboratorio", "computador", "computadora", "programar", "programacion", "codigo",
                     "redes", "practica de redes", "lab "],
     "auditorio": ["auditorio", "evento", "conferencia", "charla", "presentacion grande", "ceremonia",
@@ -149,6 +149,27 @@ ACTIVIDADES = {
     "sala_estudio": ["estudiar", "estudio", "sala", "grupo de estudio", "repasar", "tarea", "reunion",
                      "parcial", "examen", "exposicion"],
 }
+# Actividades para las que la universidad NO ofrece espacios reservables
+NO_DISPONIBLES = {
+    "videojuegos": ["videojuego", "video juego", "videjuego", "consola", "xbox", "playstation", "play station",
+                    "nintendo", "gamer", "gaming", "jugar en linea", "fifa", "fortnite", "lan party"],
+    "fiestas o celebraciones": ["fiesta", "rumba", "celebracion", "cumpleanos", "parche", "farra"],
+    "comer o cocinar": ["comer", "almorzar", "almuerzo", "cocinar", "cena", "desayunar"],
+    "dormir o descansar": ["dormir", "siesta", "descansar", "acostarme"],
+    "ver películas o series": ["pelicula", "series", "netflix", "cine"],
+    "juegos de azar": ["apuesta", "casino", "poker", "cartas por plata"],
+}
+
+
+def actividad_no_disponible(mensaje: str) -> str | None:
+    texto = normalizar(mensaje)
+    return next((nombre for nombre, claves in NO_DISPONIBLES.items() if any(c in texto for c in claves)), None)
+
+
+def menciona_jugar(mensaje: str) -> bool:
+    return bool(re.search(r"\bjug(ar|amos|ando|amos a)\b", normalizar(mensaje)))
+
+
 NOMBRE_TIPO = {"cancha": "canchas", "laboratorio": "laboratorios", "auditorio": "auditorios",
                "sala_estudio": "salas de estudio"}
 

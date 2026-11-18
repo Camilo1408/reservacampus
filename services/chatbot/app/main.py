@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from . import config, ia
-from .reglas import NOMBRE_TIPO, detectar, extraer_fecha, extraer_hora, extraer_personas, extraer_tipo, franjas_libres
+from .reglas import NOMBRE_TIPO, actividad_no_disponible, detectar, menciona_jugar, extraer_fecha, extraer_hora, extraer_personas, extraer_tipo, franjas_libres
 
 app = FastAPI(
     title="Chatbot Service · ReservaCampus",
@@ -74,6 +74,18 @@ def _ocupacion_texto(ocupado: list[dict]) -> str:
                      + (f" ({o['etiqueta']})" if o.get("tipo") == "clase" else " (reservado)") for o in ocupado)
 
 
+def responder_actividad_no_disponible(actividad: str) -> ChatOut:
+    return ChatOut(
+        respuesta=f"❌ No hay espacios para {actividad} en ReservaCampus. Los espacios son para actividades "
+                  "académicas y deportivas:\n"
+                  "• **Salas de estudio**: estudiar, reuniones y trabajos en grupo\n"
+                  "• **Laboratorios**: prácticas de computación y redes\n"
+                  "• **Auditorio**: eventos y conferencias\n"
+                  "• **Cancha**: fútbol, baloncesto y voleibol",
+        fuente="reglas", intencion="actividad_no_disponible",
+        sugerencias=["¿Hay cancha para fútbol hoy?", "¿Qué salas de estudio están libres?"])
+
+
 async def responder_disponibilidad(mensaje: str) -> ChatOut:
     ahora = datetime.now(config.ZONA)
     hoy = ahora.date()
@@ -81,6 +93,11 @@ async def responder_disponibilidad(mensaje: str) -> ChatOut:
     hora = extraer_hora(mensaje)
     tipo = extraer_tipo(mensaje)
     personas = extraer_personas(mensaje)
+    if not tipo and menciona_jugar(mensaje):
+        return ChatOut(respuesta="¿Qué quieres jugar? 🙂 Para deportes como fútbol, baloncesto o voleibol tenemos "
+                                 "la **Cancha Múltiple**. Para otro tipo de juegos (como videojuegos) no hay espacios "
+                                 "en la plataforma.", fuente="reglas", intencion="disponibilidad",
+                       sugerencias=["¿Hay cancha para fútbol hoy?", "¿Hay cancha para baloncesto mañana?"])
     params = {"fecha": fecha.isoformat()}
     if tipo:
         params["tipo"] = tipo
@@ -166,6 +183,9 @@ def health():
 @app.post("/chat", response_model=ChatOut, tags=["chat"])
 async def chat(datos: ChatIn, request: Request, authorization: str | None = Header(default=None)):
     limitar(request.client.host if request.client else "desconocido")
+    no_disponible = actividad_no_disponible(datos.mensaje)
+    if no_disponible:
+        return responder_actividad_no_disponible(no_disponible)
     intencion = detectar(datos.mensaje)
     try:
         if intencion:

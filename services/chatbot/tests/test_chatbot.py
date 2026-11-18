@@ -132,3 +132,33 @@ def test_filtra_por_capacidad(monkeypatch):
     r, _ = chat_con(monkeypatch, "necesito una sala libre mañana para estudiar 8 personas",
                     [{"espacio": sala, "libre": True, "ocupado": []}])
     assert r["respuesta"].startswith("No hay salas de estudio disponibles para 8 personas")
+
+
+# ---------------- actividades sin espacio y "jugar" ambiguo
+@pytest.mark.parametrize("mensaje,actividad", [
+    ("y para jugar video juegos", "videojuegos"),
+    ("hay espacio para jugar fifa en la consola?", "videojuegos"),
+    ("quiero hacer una fiesta de cumpleaños", "fiestas o celebraciones"),
+    ("dónde puedo almorzar?", "comer o cocinar"),
+    ("quiero un espacio para jugar futbol", None),
+])
+def test_actividad_no_disponible(mensaje, actividad):
+    from app.reglas import actividad_no_disponible
+    assert actividad_no_disponible(mensaje) == actividad
+
+
+def test_videojuegos_no_ofrece_canchas(monkeypatch):
+    r, llamadas = chat_con(monkeypatch, "y para jugar video juegos", [])
+    assert r["respuesta"].startswith("❌ No hay espacios para videojuegos")
+    assert r["intencion"] == "actividad_no_disponible" and llamadas == []
+
+
+def test_jugar_sin_deporte_pregunta(monkeypatch):
+    r, llamadas = chat_con(monkeypatch, "hay algún espacio libre para jugar?", [])
+    assert r["respuesta"].startswith("¿Qué quieres jugar?") and llamadas == []
+
+
+def test_jugar_futbol_sigue_ofreciendo_cancha(monkeypatch):
+    disp = [{"espacio": CANCHA, "libre": True, "ocupado": []}]
+    r, llamadas = chat_con(monkeypatch, "quiero un espacio para jugar futbol, hay disponible", disp)
+    assert llamadas[0][1]["tipo"] == "cancha" and "Cancha Múltiple" in r["respuesta"]
