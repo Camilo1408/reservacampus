@@ -219,7 +219,8 @@ async function cargarMisReservas() {
 }
 
 async function cancelar(id, luego) {
-  if (!confirm("¿Seguro que quieres cancelar esta reserva?")) return;
+  if (!(await UI.confirmar({ titulo: "Cancelar reserva", mensaje: "El horario quedará libre para otras personas. Esta acción no se puede deshacer.",
+    aceptar: "Sí, cancelar", cancelar: "Volver", peligro: true }))) return;
   try {
     await api(C.RESERVAS_URL, `/reservas/${id}/cancelar`, { method: "POST" });
     toast("Reserva cancelada");
@@ -356,7 +357,8 @@ async function toggleEspacio(id) {
 }
 async function eliminarEspacio(id) {
   const e = admin.espacios.find((x) => x.id === id);
-  if (!confirm(`¿Eliminar definitivamente "${e.nombre}"? También se borrarán sus horarios de clase.`)) return;
+  if (!(await UI.confirmar({ titulo: `Eliminar "${e.nombre}"`, mensaje: "Se borrarán el espacio, su historial de reservas y sus horarios de clase. Si solo quieres ocultarlo, usa Deshabilitar.",
+    aceptar: "Eliminar", peligro: true }))) return;
   try {
     await api(C.RESERVAS_URL, `/espacios/${id}`, { method: "DELETE" });
     toast("Espacio eliminado");
@@ -423,7 +425,8 @@ $("#form-horario").addEventListener("submit", async (ev) => {
   } catch (err) { errorEn(f, err.message); }
 });
 $("#btn-borrar-horario").addEventListener("click", async () => {
-  if (!confirm("¿Eliminar este bloque de clase?")) return;
+  if (!(await UI.confirmar({ titulo: "Eliminar clase", mensaje: "El espacio quedará disponible para reservas en esa franja.",
+    aceptar: "Eliminar", peligro: true }))) return;
   try {
     await api(C.RESERVAS_URL, `/horarios/${horarioEditando}`, { method: "DELETE" });
     cerrarModales();

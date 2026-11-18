@@ -147,7 +147,10 @@
         </section>
         <section class="tarjeta">
           <h3>Cargar horarios (CSV)</h3>
-          <p class="sub">Columnas: <code>espacio,dia,hora_inicio,hora_fin,materia,docente</code>. El espacio puede ser nombre o ID; el día, nombre (lunes…) o número (0 = lunes).</p>
+          <div class="columnas-csv">
+            <span>espacio</span><span>dia</span><span>hora_inicio</span><span>hora_fin</span><span>materia</span><span>docente</span>
+          </div>
+          <p class="sub ayuda-csv">El espacio va por nombre o ID; el día por nombre (lunes…) o número (0 = lunes). Horas en formato 24 h (HH:MM).</p>
           <form id="form-csv" class="form">
             <label>Archivo CSV<input type="file" name="archivo" accept=".csv,text/csv" required></label>
             <div class="fila">
@@ -157,7 +160,7 @@
             <label class="check"><input type="checkbox" name="reemplazar"> Reemplazar los horarios actuales de esos espacios</label>
             <div class="botones">
               <button type="button" class="btn secundario" id="btn-plantilla">Descargar plantilla</button>
-              <button class="btn primario">Cargar horarios</button>
+              <button type="submit" class="btn primario">Cargar horarios</button>
             </div>
           </form>
           <div id="resultado-csv" class="resultado"></div>
@@ -276,6 +279,7 @@
 
   <div id="toast" class="toast"></div>
   <script src="config.js"></script>
+  <script src="ui.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

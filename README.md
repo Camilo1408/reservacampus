@@ -47,11 +47,30 @@ docker compose up --build
 
 Sin Docker (SQLite, sin cola): `sh scripts/dev_local.sh` (puertos 8001-8004).
 
-## Pruebas
+## Pruebas automatizadas
+| Tipo | Ubicación | Qué cubre |
+|---|---|---|
+| Unitarias + API (pytest) | `services/*/tests` | Reglas de negocio, JWT, roles, horarios de clase, carga CSV, revocación, CRUD de espacios, consumidor de eventos, intenciones del chatbot |
+| End-to-end (Playwright) | `tests/e2e` | Registro/login, filtros, reservar/cancelar, bloqueo por clase, CRUD de espacios, clases y CSV, revocación vista por el estudiante, chatbot, sin desborde en móvil |
+| Carga (k6) | `tests/carga` | Tiempos de respuesta bajo 20→100 usuarios concurrentes |
+
 ```bash
-cd services/reservas && python -m pytest -q     # igual para auth, notificaciones, chatbot
+cd services/reservas && python -m pytest -q        # igual para auth, notificaciones, chatbot
+pip install pytest-playwright && playwright install chromium
+python -m pytest tests/e2e                          # levanta todo el sistema solo, con SQLite temporal
+E2E_BASE_URL=https://reservacampus-web-gcr3.onrender.com python -m pytest tests/e2e   # contra Render
 k6 run -e BASE=http://localhost:8080/api tests/carga/k6-reservas.js
 ```
+
+## Administración
+- **Espacios:** crear, editar, deshabilitar (deja de aparecer para reservar) y eliminar.
+- **Horarios de clase:** bloques semanales fijos que bloquean el espacio; se crean uno a uno o con un CSV
+  (`docs/horarios_ejemplo.csv`). Si chocan con reservas existentes, el sistema lo avisa y permite revocarlas.
+- **Revocar reservas:** con justificación obligatoria; el usuario la recibe en la app y por correo (Brevo).
+
+## Correo
+Render gratuito bloquea SMTP, así que el correo sale por la API HTTP de **Brevo** (300 correos/día gratis):
+define `BREVO_API_KEY` y `MAIL_FROM` (remitente verificado) en el servicio de notificaciones.
 
 ## Reglas de negocio
 Bloques de 30 min · duración 30 min–3 h · hasta 30 días de anticipación · máx. 3 reservas activas por usuario ·
