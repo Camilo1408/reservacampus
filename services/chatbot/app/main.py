@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from . import config, ia
-from .reglas import detectar, extraer_fecha, extraer_hora
+from .reglas import NOMBRE_TIPO, detectar, extraer_fecha, extraer_hora, extraer_personas, extraer_tipo, franjas_libres
 
 app = FastAPI(
     title="Chatbot Service · ReservaCampus",
@@ -69,36 +69,72 @@ def fecha_texto(f) -> str:
     return f.strftime("%d/%m/%Y")
 
 
+def _ocupacion_texto(ocupado: list[dict]) -> str:
+    return ", ".join(f"{o['hora_inicio'][:5]}-{o['hora_fin'][:5]}"
+                     + (f" ({o['etiqueta']})" if o.get("tipo") == "clase" else " (reservado)") for o in ocupado)
+
+
 async def responder_disponibilidad(mensaje: str) -> ChatOut:
-    hoy = datetime.now(config.ZONA).date()
+    ahora = datetime.now(config.ZONA)
+    hoy = ahora.date()
     fecha = extraer_fecha(mensaje, hoy)
     hora = extraer_hora(mensaje)
+    tipo = extraer_tipo(mensaje)
+    personas = extraer_personas(mensaje)
     params = {"fecha": fecha.isoformat()}
+    if tipo:
+        params["tipo"] = tipo
     if hora:
         fin = (datetime.combine(fecha, hora) + timedelta(hours=1)).time()
         params |= {"hora_inicio": hora.strftime("%H:%M"), "hora_fin": fin.strftime("%H:%M")}
     datos = await api_reservas("/disponibilidad", params)
-    cuando = fecha_texto(fecha) + (f" de {hora:%H:%M} a {fin:%H:%M}" if hora else "")
-    libres = [d for d in datos if d["libre"]]
+    if personas:
+        datos = [d for d in datos if d["espacio"]["capacidad"] >= personas]
+
+    que = NOMBRE_TIPO.get(tipo, "espacios")
+    para = f" para {personas} personas" if personas else ""
+    cuando = fecha_texto(fecha)
+    sugerencias = ["¿Cómo reservo?", "¿Cuáles son las reglas?"]
+
+    if not datos:
+        return ChatOut(respuesta=f"No hay {que} disponibles{para} en la plataforma. Prueba con otro tipo de espacio.",
+                       fuente="reglas", intencion="disponibilidad", sugerencias=["¿Qué espacios hay?"])
+
+    # Con hora concreta: respuesta directa sí/no
     if hora:
-        if not libres:
-            return ChatOut(respuesta=f"No hay espacios libres {cuando}. Prueba con otra hora.", fuente="reglas",
-                           intencion="disponibilidad")
-        lineas = [f"• {d['espacio']['nombre']} ({d['espacio']['capacidad']} personas)" for d in libres]
-        return ChatOut(respuesta=f"Espacios libres {cuando}:\n" + "\n".join(lineas), fuente="reglas",
-                       intencion="disponibilidad", sugerencias=["¿Cómo reservo?"])
-    lineas = []
+        rango = f"{cuando} de {hora:%H:%M} a {fin:%H:%M}"
+        libres = [d for d in datos if d["libre"]]
+        if libres:
+            lineas = [f"• {d['espacio']['nombre']} ({d['espacio']['capacidad']} personas, {d['espacio']['ubicacion']})"
+                      for d in libres]
+            return ChatOut(respuesta=f"✅ Sí, hay {que} libres {rango}{para}:\n" + "\n".join(lineas),
+                           fuente="reglas", intencion="disponibilidad", sugerencias=sugerencias)
+        lineas = [f"• {d['espacio']['nombre']}: {_ocupacion_texto(d['ocupado']) or 'fuera de su horario'}"
+                  for d in datos]
+        return ChatOut(respuesta=f"❌ No hay {que} libres {rango}{para}.\n" + "\n".join(lineas) +
+                       "\nPrueba con otra hora o pregúntame qué está libre ese día.",
+                       fuente="reglas", intencion="disponibilidad",
+                       sugerencias=[f"¿Qué {que} están libres {cuando}?"])
+
+    # Sin hora: franjas libres por espacio (si es hoy, desde la hora actual)
+    desde = ahora.hour * 60 + ahora.minute if fecha == hoy else 0
+    con_hueco, sin_hueco = [], []
     for d in datos:
         e = d["espacio"]
-        if d["ocupado"]:
-            franjas = ", ".join(f"{o['hora_inicio'][:5]}-{o['hora_fin'][:5]}"
-                                + (f" ({o['etiqueta']})" if o.get("tipo") == "clase" else "") for o in d["ocupado"])
-            lineas.append(f"• {e['nombre']}: ocupado {franjas}")
+        huecos = franjas_libres(e["hora_apertura"][:5], e["hora_cierre"][:5], d["ocupado"], desde)
+        if huecos:
+            texto = ", ".join(f"{a}-{b}" for a, b in huecos)
+            con_hueco.append(f"• **{e['nombre']}** ({e['capacidad']} personas): libre {texto}")
         else:
-            lineas.append(f"• {e['nombre']}: libre todo el día ({e['hora_apertura'][:5]}-{e['hora_cierre'][:5]})")
-    return ChatOut(respuesta=f"Disponibilidad para {cuando}:\n" + "\n".join(lineas), fuente="reglas",
-                   intencion="disponibilidad",
-                   sugerencias=["¿Qué está libre mañana a las 10?", "¿Cómo reservo?"])
+            sin_hueco.append(e["nombre"])
+    if not con_hueco:
+        return ChatOut(respuesta=f"❌ No quedan {que} libres {cuando}{para}. "
+                                 f"Ocupados: {', '.join(sin_hueco)}. Prueba con otro día.",
+                       fuente="reglas", intencion="disponibilidad", sugerencias=["¿Y mañana?"])
+    respuesta = f"✅ Sí, hay {que} disponibles {cuando}{para}:\n" + "\n".join(con_hueco)
+    if sin_hueco:
+        respuesta += f"\nSin horario libre {cuando}: {', '.join(sin_hueco)}."
+    return ChatOut(respuesta=respuesta, fuente="reglas", intencion="disponibilidad", sugerencias=sugerencias)
 
 
 async def responder_mis_reservas(token: str | None) -> ChatOut:

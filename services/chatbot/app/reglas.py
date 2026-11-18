@@ -23,7 +23,9 @@ class Intencion:
 
 INTENCIONES = [
     Intencion("disponibilidad", ["disponible", "disponibles", "disponibilidad", "libre", "libres", "desocupad",
-                                 "hay espacio", "hay sala", "esta ocupad", "ocupado", "ocupada"], prioridad=9),
+                                 "hay espacio", "hay sala", "esta ocupad", "ocupado", "ocupada", "hay cancha",
+                                 "hay laboratorio", "hay auditorio", "quiero un espacio", "necesito un espacio",
+                                 "donde puedo", "hay algun", "puedo reservar", "para jugar"], prioridad=9),
     Intencion("mis_reservas", ["mis reservas", "mi reserva", "tengo reserva", "tengo alguna", "reserve",
                                "mis proximas"], prioridad=8),
     Intencion("cancelar", ["cancelar", "cancelo", "anular", "anulo", "eliminar reserva", "borrar reserva"], prioridad=10,
@@ -133,3 +135,57 @@ def extraer_hora(mensaje: str) -> time | None:
 
 def ahora_local(zona) -> datetime:
     return datetime.now(zona)
+
+
+# ---------------------------------------------------------------- qué tipo de espacio busca el usuario
+ACTIVIDADES = {
+    "cancha": ["futbol", "baloncesto", "basket", "voleibol", "voley", "microfutbol", "deporte", "jugar",
+               "partido", "cancha", "entrenar", "ejercicio"],
+    "laboratorio": ["laboratorio", "computador", "computadora", "programar", "programacion", "codigo",
+                    "redes", "practica de redes", "lab "],
+    "auditorio": ["auditorio", "evento", "conferencia", "charla", "presentacion grande", "ceremonia",
+                  "seminario", "foro"],
+    "sala_estudio": ["estudiar", "estudio", "sala", "grupo de estudio", "repasar", "tarea", "reunion",
+                     "parcial", "examen", "exposicion"],
+}
+NOMBRE_TIPO = {"cancha": "canchas", "laboratorio": "laboratorios", "auditorio": "auditorios",
+               "sala_estudio": "salas de estudio"}
+
+
+def extraer_tipo(mensaje: str) -> str | None:
+    """El tipo con más coincidencias; ante empate gana el más específico (orden del diccionario)."""
+    texto = f" {normalizar(mensaje)} "
+    puntajes = {t: sum(1 for c in claves if c in texto) for t, claves in ACTIVIDADES.items()}
+    mejor = max(puntajes, key=lambda t: puntajes[t])
+    return mejor if puntajes[mejor] else None
+
+
+def extraer_personas(mensaje: str) -> int | None:
+    m = re.search(r"\b(\d{1,3})\s*(personas|persona|estudiantes|integrantes|jugadores|compañeros|companeros)\b",
+                  normalizar(mensaje))
+    return int(m.group(1)) if m else None
+
+
+def a_min(hhmm: str) -> int:
+    return int(hhmm[:2]) * 60 + int(hhmm[3:5])
+
+
+def a_hora(m: int) -> str:
+    return f"{m // 60:02d}:{m % 60:02d}"
+
+
+def franjas_libres(apertura: str, cierre: str, ocupado: list[dict], desde_min: int = 0,
+                   minimo: int = 30) -> list[tuple[str, str]]:
+    """Huecos libres dentro del horario del espacio (descontando ocupación y la hora actual si es hoy).
+    Los inicios se redondean al siguiente bloque de 30 min porque así se reserva."""
+    inicio = max(a_min(apertura), -(-desde_min // 30) * 30)
+    fin_dia = a_min(cierre)
+    libres, cursor = [], inicio
+    for o in sorted(ocupado, key=lambda x: x["hora_inicio"]):
+        oi, of = a_min(o["hora_inicio"]), a_min(o["hora_fin"])
+        if oi - cursor >= minimo:
+            libres.append((a_hora(cursor), a_hora(oi)))
+        cursor = max(cursor, of)
+    if fin_dia - cursor >= minimo:
+        libres.append((a_hora(cursor), a_hora(fin_dia)))
+    return libres
