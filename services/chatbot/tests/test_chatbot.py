@@ -23,6 +23,9 @@ from app.reglas import detectar, extraer_fecha, extraer_hora  # noqa: E402
     ("¿cómo confirmo llegada?", "llegada"),
     ("la sala sigue ocupada y no han salido", "reporte"),
     ("¿por qué estoy sancionado?", "sanciones"),
+    ("necesito un laboratorio mañana para 25 personas", "disponibilidad"),
+    ("busco una sala para estudiar", "disponibilidad"),
+    ("¿qué laboratorios hay?", "tipos"),
 ])
 def test_detectar_intencion(mensaje, esperada):
     assert detectar(mensaje).nombre == esperada
