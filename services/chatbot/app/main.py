@@ -91,7 +91,8 @@ async def responder_disponibilidad(mensaje: str) -> ChatOut:
     for d in datos:
         e = d["espacio"]
         if d["ocupado"]:
-            franjas = ", ".join(f"{o['hora_inicio'][:5]}-{o['hora_fin'][:5]}" for o in d["ocupado"])
+            franjas = ", ".join(f"{o['hora_inicio'][:5]}-{o['hora_fin'][:5]}"
+                                + (f" ({o['etiqueta']})" if o.get("tipo") == "clase" else "") for o in d["ocupado"])
             lineas.append(f"• {e['nombre']}: ocupado {franjas}")
         else:
             lineas.append(f"• {e['nombre']}: libre todo el día ({e['hora_apertura'][:5]}-{e['hora_cierre'][:5]})")

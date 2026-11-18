@@ -66,6 +66,10 @@ services:
     healthCheckPath: /health
     envVars:
       - fromGroup: reservacampus-comun
+      - key: BREVO_API_KEY      # correo por API HTTP (Render gratis bloquea SMTP)
+        sync: false
+      - key: MAIL_FROM          # remitente verificado en Brevo
+        sync: false
       - key: DATABASE_URL
         fromDatabase: { name: reservacampus-db, property: connectionString }
       - key: REDIS_URL

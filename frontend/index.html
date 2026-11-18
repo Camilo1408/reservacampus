@@ -80,6 +80,11 @@
         </select>
       </div>
     </div>
+    <div class="leyenda-colores">
+      <span><i style="background:var(--ok-bg)"></i>Libre</span>
+      <span><i style="background:var(--acento)"></i>Clase fija</span>
+      <span><i style="background:var(--peligro)"></i>Reservado</span>
+    </div>
     <div id="grid-espacios" class="grid"></div>
   </main>
 
@@ -93,31 +98,72 @@
   <main id="vista-admin" class="vista oculto">
     <div class="cabecera-vista"><div><h2>Administración</h2><p class="sub">Resumen de uso y todas las reservas.</p></div></div>
     <div id="stats" class="stats"></div>
-    <div class="admin-cols">
-      <section class="tarjeta">
-        <h3>Nuevo espacio</h3>
-        <form id="form-espacio" class="form">
-          <label>Nombre<input name="nombre" required maxlength="80"></label>
-          <div class="fila">
-            <label>Tipo<select name="tipo">
-              <option value="sala_estudio">Sala de estudio</option><option value="laboratorio">Laboratorio</option>
-              <option value="auditorio">Auditorio</option><option value="cancha">Cancha</option></select></label>
-            <label>Capacidad<input type="number" name="capacidad" min="1" max="1000" required value="6"></label>
-          </div>
-          <label>Ubicación<input name="ubicacion" required maxlength="120"></label>
-          <div class="fila">
-            <label>Abre<input type="time" name="hora_apertura" value="07:00" step="1800"></label>
-            <label>Cierra<input type="time" name="hora_cierre" value="21:00" step="1800"></label>
-          </div>
-          <button class="btn primario">Crear espacio</button>
-        </form>
-      </section>
-      <section class="tarjeta ancha">
-        <h3>Todas las reservas</h3>
-        <div class="tabla-scroll"><table id="tabla-reservas"><thead><tr>
-          <th>Espacio</th><th>Usuario</th><th>Fecha</th><th>Horario</th><th>Estado</th><th></th></tr></thead><tbody></tbody></table></div>
-      </section>
+    <div class="subtabs" role="tablist">
+      <button class="subtab activo" data-sub="reservas">Reservas</button>
+      <button class="subtab" data-sub="espacios">Espacios</button>
+      <button class="subtab" data-sub="horarios">Horarios de clase</button>
     </div>
+
+    <!-- Reservas -->
+    <section id="sub-reservas" class="tarjeta panel-admin">
+      <div class="panel-cab">
+        <h3>Todas las reservas</h3>
+        <div class="controles">
+          <select id="filtro-estado" aria-label="Estado">
+            <option value="">Todos los estados</option><option value="confirmada">Confirmadas</option>
+            <option value="cancelada">Canceladas</option><option value="revocada">Revocadas</option>
+          </select>
+          <input type="date" id="filtro-fecha-admin" aria-label="Fecha">
+        </div>
+      </div>
+      <div class="tabla-resp"><table id="tabla-reservas"><thead><tr>
+        <th>Espacio</th><th>Usuario</th><th>Fecha</th><th>Horario</th><th>Estado</th><th class="acc">Acciones</th>
+      </tr></thead><tbody></tbody></table></div>
+    </section>
+
+    <!-- Espacios -->
+    <section id="sub-espacios" class="tarjeta panel-admin oculto">
+      <div class="panel-cab">
+        <h3>Espacios</h3>
+        <div class="controles"><button class="btn primario" id="btn-nuevo-espacio">+ Nuevo espacio</button></div>
+      </div>
+      <div class="tabla-resp"><table id="tabla-espacios"><thead><tr>
+        <th>Nombre</th><th>Tipo</th><th>Capacidad</th><th>Ubicación</th><th>Horario</th><th>Estado</th><th class="acc">Acciones</th>
+      </tr></thead><tbody></tbody></table></div>
+    </section>
+
+    <!-- Horarios de clase -->
+    <section id="sub-horarios" class="panel-admin oculto">
+      <div class="horarios-cols">
+        <section class="tarjeta">
+          <div class="panel-cab">
+            <h3>Horario semanal</h3>
+            <div class="controles">
+              <select id="filtro-espacio-horario" aria-label="Espacio"></select>
+              <button class="btn primario" id="btn-nuevo-horario">+ Agregar clase</button>
+            </div>
+          </div>
+          <div id="semana" class="semana"></div>
+        </section>
+        <section class="tarjeta">
+          <h3>Cargar horarios (CSV)</h3>
+          <p class="sub">Columnas: <code>espacio,dia,hora_inicio,hora_fin,materia,docente</code>. El espacio puede ser nombre o ID; el día, nombre (lunes…) o número (0 = lunes).</p>
+          <form id="form-csv" class="form">
+            <label>Archivo CSV<input type="file" name="archivo" accept=".csv,text/csv" required></label>
+            <div class="fila">
+              <label>Vigente desde<input type="date" name="vigente_desde"></label>
+              <label>Vigente hasta<input type="date" name="vigente_hasta"></label>
+            </div>
+            <label class="check"><input type="checkbox" name="reemplazar"> Reemplazar los horarios actuales de esos espacios</label>
+            <div class="botones">
+              <button type="button" class="btn secundario" id="btn-plantilla">Descargar plantilla</button>
+              <button class="btn primario">Cargar horarios</button>
+            </div>
+          </form>
+          <div id="resultado-csv" class="resultado"></div>
+        </section>
+      </div>
+    </section>
   </main>
 
   <!-- ============ MODAL RESERVA ============ -->
@@ -137,6 +183,76 @@
       <div class="modal-acciones">
         <button type="button" class="btn secundario" id="cerrar-modal">Cancelar</button>
         <button type="submit" class="btn primario" value="ok">Confirmar reserva</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ============ MODAL ESPACIO ============ -->
+  <dialog id="modal-espacio" class="modal">
+    <form id="form-espacio" class="form" method="dialog">
+      <h3 id="titulo-espacio">Nuevo espacio</h3>
+      <label>Nombre<input name="nombre" required minlength="2" maxlength="80"></label>
+      <div class="fila">
+        <label>Tipo<select name="tipo">
+          <option value="sala_estudio">Sala de estudio</option><option value="laboratorio">Laboratorio</option>
+          <option value="auditorio">Auditorio</option><option value="cancha">Cancha</option></select></label>
+        <label>Capacidad<input type="number" name="capacidad" min="1" max="1000" required value="6"></label>
+      </div>
+      <label>Ubicación<input name="ubicacion" required minlength="2" maxlength="120"></label>
+      <label>Descripción<input name="descripcion" maxlength="300"></label>
+      <div class="fila">
+        <label>Abre<input type="time" name="hora_apertura" value="07:00" step="1800" required></label>
+        <label>Cierra<input type="time" name="hora_cierre" value="21:00" step="1800" required></label>
+      </div>
+      <label class="check"><input type="checkbox" name="activo" checked> Disponible para reservar</label>
+      <p class="error" role="alert"></p>
+      <div class="modal-acciones">
+        <button type="button" class="btn secundario" data-cerrar>Cancelar</button>
+        <button type="submit" class="btn primario">Guardar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ============ MODAL HORARIO ============ -->
+  <dialog id="modal-horario" class="modal">
+    <form id="form-horario" class="form" method="dialog">
+      <h3 id="titulo-horario">Agregar clase</h3>
+      <label>Espacio<select name="espacio_id" required></select></label>
+      <label>Materia<input name="materia" required minlength="2" maxlength="100"></label>
+      <label>Docente<input name="docente" maxlength="80"></label>
+      <div class="fila3">
+        <label>Día<select name="dia_semana">
+          <option value="0">Lunes</option><option value="1">Martes</option><option value="2">Miércoles</option>
+          <option value="3">Jueves</option><option value="4">Viernes</option><option value="5">Sábado</option>
+          <option value="6">Domingo</option></select></label>
+        <label>Desde<input type="time" name="hora_inicio" value="08:00" step="1800" required></label>
+        <label>Hasta<input type="time" name="hora_fin" value="10:00" step="1800" required></label>
+      </div>
+      <div class="fila">
+        <label>Vigente desde<input type="date" name="vigente_desde"></label>
+        <label>Vigente hasta<input type="date" name="vigente_hasta"></label>
+      </div>
+      <p class="error" role="alert"></p>
+      <div class="modal-acciones">
+        <button type="button" class="btn peligro oculto" id="btn-borrar-horario">Eliminar</button>
+        <button type="button" class="btn secundario" data-cerrar>Cancelar</button>
+        <button type="submit" class="btn primario">Guardar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ============ MODAL REVOCAR ============ -->
+  <dialog id="modal-revocar" class="modal">
+    <form id="form-revocar" class="form" method="dialog">
+      <h3>Revocar reserva</h3>
+      <p id="detalle-revocar" class="sub"></p>
+      <label>Justificación (se enviará al usuario por correo)
+        <textarea name="justificacion" required minlength="10" maxlength="300" rows="4"
+          placeholder="Ej. El espacio estará en mantenimiento eléctrico ese día."></textarea></label>
+      <p class="error" role="alert"></p>
+      <div class="modal-acciones">
+        <button type="button" class="btn secundario" data-cerrar>Volver</button>
+        <button type="submit" class="btn peligro-solido">Revocar y notificar</button>
       </div>
     </form>
   </dialog>

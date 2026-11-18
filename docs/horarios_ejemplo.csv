@@ -1,0 +1,11 @@
+espacio,dia,hora_inicio,hora_fin,materia,docente
+Sala de Estudio A-101,lunes,14:00,16:00,Monitoría de Programación,Monitoría
+Sala de Estudio A-101,miercoles,14:00,16:00,Monitoría de Programación,Monitoría
+Sala de Estudio A-102,martes,08:00,10:00,Club de Lectura,Bienestar
+Laboratorio de Cómputo 1,martes,08:00,10:00,Estructuras de Datos,Ing. Sofía Rojas
+Laboratorio de Cómputo 1,jueves,08:00,10:00,Estructuras de Datos,Ing. Sofía Rojas
+Laboratorio de Cómputo 1,viernes,14:00,17:00,Desarrollo Web,Ing. Mateo Castro
+Laboratorio de Redes,martes,14:00,16:00,Sistemas Operativos,Ing. Diana Vela
+Auditorio Principal,miercoles,18:00,20:00,Seminario de Investigación,Decanatura
+Cancha Múltiple,martes,16:00,18:00,Selección de Fútbol Sala,Deportes
+Cancha Múltiple,jueves,16:00,18:00,Selección de Baloncesto,Deportes

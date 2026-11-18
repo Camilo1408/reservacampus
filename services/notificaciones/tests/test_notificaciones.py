@@ -48,3 +48,19 @@ def test_marcar_leida_solo_dueno(client):
         nid = procesar_evento(db, "2-0", "reserva.cancelada", EVENTO).id
     assert client.post(f"/notificaciones/{nid}/leer", headers=headers(8)).status_code == 404
     assert client.post(f"/notificaciones/{nid}/leer", headers=headers(7)).json()["leida"] is True
+
+
+def test_revocacion_incluye_justificacion(client, monkeypatch):
+    from app import consumidor
+    enviados = []
+    monkeypatch.setattr(consumidor, "enviar_correo", lambda *a: enviados.append(a) or True)
+    from app.database import SessionLocal
+    with SessionLocal() as db:
+        n = consumidor.procesar_evento(db, "3-0", "reserva.revocada", {**EVENTO, "justificacion": "Evento institucional"})
+    assert "Evento institucional" in n.mensaje and n.correo_enviado
+    assert enviados[0][0] == "ana@u.edu"
+
+
+def test_html_escapa_contenido():
+    from app.consumidor import html_correo
+    assert "<script>" not in html_correo("<script>", "t", "m")

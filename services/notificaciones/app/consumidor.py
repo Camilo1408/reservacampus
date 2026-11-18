@@ -5,8 +5,10 @@ import smtplib
 import socket
 import threading
 import time
+import html
 from email.message import EmailMessage
 
+import httpx
 import redis
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -22,25 +24,57 @@ PLANTILLAS = {
                        "Tu reserva de {espacio} para el {fecha} de {hora_inicio} a {hora_fin} quedó confirmada."),
     "reserva.cancelada": ("Reserva cancelada",
                           "La reserva de {espacio} del {fecha} ({hora_inicio}-{hora_fin}) fue cancelada."),
+    "reserva.revocada": ("Tu reserva fue revocada ⚠️",
+                         "La administración revocó tu reserva de {espacio} del {fecha} ({hora_inicio}-{hora_fin}). "
+                         "Motivo: {justificacion}"),
 }
 
 
-def enviar_correo(destino: str, asunto: str, cuerpo: str) -> bool:
-    if not config.SMTP_HOST:
+def html_correo(nombre: str, titulo: str, mensaje: str) -> str:
+    esc = lambda t: html.escape(str(t))  # noqa: E731
+    return f"""<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;border:1px solid #e2e6f0;
+    border-radius:12px;overflow:hidden"><div style="background:#3b4cca;color:#fff;padding:16px 20px;font-size:18px">
+    <b>ReservaCampus</b></div><div style="padding:20px;color:#15192b;line-height:1.5"><p>Hola {esc(nombre)},</p>
+    <h3 style="margin:0 0 8px">{esc(titulo)}</h3><p>{esc(mensaje)}</p>
+    <p style="color:#5d6480;font-size:13px">Este es un mensaje automático de la plataforma de reservas.</p></div></div>"""
+
+
+def enviar_por_brevo(destino: str, nombre: str, asunto: str, cuerpo_html: str) -> bool:
+    """API HTTP de Brevo (Render gratuito bloquea los puertos SMTP)."""
+    r = httpx.post("https://api.brevo.com/v3/smtp/email", timeout=15,
+                   headers={"api-key": config.BREVO_API_KEY, "accept": "application/json"},
+                   json={"sender": {"name": config.MAIL_FROM_NAME, "email": config.MAIL_FROM},
+                         "to": [{"email": destino, "name": nombre or destino}],
+                         "subject": asunto, "htmlContent": cuerpo_html})
+    if r.status_code >= 300:
+        log.warning("Brevo respondió %s: %s", r.status_code, r.text[:200])
         return False
+    return True
+
+
+def enviar_por_smtp(destino: str, asunto: str, cuerpo_html: str) -> bool:
+    msg = EmailMessage()
+    msg["From"], msg["To"], msg["Subject"] = config.SMTP_FROM, destino, asunto
+    msg.set_content("Abre este correo en un cliente compatible con HTML.")
+    msg.add_alternative(cuerpo_html, subtype="html")
+    with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT, timeout=10) as s:
+        s.starttls()
+        if config.SMTP_USER:
+            s.login(config.SMTP_USER, config.SMTP_PASSWORD)
+        s.send_message(msg)
+    return True
+
+
+def enviar_correo(destino: str, nombre: str, asunto: str, mensaje: str) -> bool:
+    cuerpo = html_correo(nombre, asunto, mensaje)
     try:
-        msg = EmailMessage()
-        msg["From"], msg["To"], msg["Subject"] = config.SMTP_FROM, destino, asunto
-        msg.set_content(cuerpo)
-        with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT, timeout=10) as s:
-            s.starttls()
-            if config.SMTP_USER:
-                s.login(config.SMTP_USER, config.SMTP_PASSWORD)
-            s.send_message(msg)
-        return True
+        if config.BREVO_API_KEY and config.MAIL_FROM:
+            return enviar_por_brevo(destino, nombre, asunto, cuerpo)
+        if config.SMTP_HOST:
+            return enviar_por_smtp(destino, asunto, cuerpo)
     except Exception as e:  # el correo es "best effort": no debe tumbar el consumidor
         log.warning("No se pudo enviar correo a %s: %s", destino, e)
-        return False
+    return False
 
 
 def procesar_evento(db: Session, evento_id: str, tipo: str, datos: dict) -> Notificacion | None:
@@ -50,10 +84,10 @@ def procesar_evento(db: Session, evento_id: str, tipo: str, datos: dict) -> Noti
     if db.scalar(select(Notificacion).where(Notificacion.evento_id == evento_id)):
         return None
     titulo, plantilla = PLANTILLAS[tipo]
-    mensaje = plantilla.format(**datos)
+    mensaje = plantilla.format(**{"justificacion": "", **datos})
     n = Notificacion(usuario_id=int(datos["usuario_id"]), email=datos["usuario_email"], tipo=tipo,
                      titulo=titulo, mensaje=mensaje, evento_id=evento_id)
-    n.correo_enviado = enviar_correo(n.email, titulo, f"Hola {datos.get('usuario_nombre', '')},\n\n{mensaje}")
+    n.correo_enviado = enviar_correo(n.email, datos.get("usuario_nombre", ""), titulo, mensaje)
     db.add(n)
     db.commit()
     return n

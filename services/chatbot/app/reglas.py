@@ -40,6 +40,7 @@ INTENCIONES = [
               respuesta="Reglas de reserva:\n• Bloques de 30 minutos, mínimo 30 min y máximo 3 horas.\n"
                         "• Hasta 30 días de anticipación.\n• Máximo 3 reservas activas por persona.\n"
                         "• No se puede superar la capacidad del espacio.\n"
+                        "• Los horarios de clase bloquean el espacio y no se pueden reservar.\n"
                         "• Si no vas a usar el espacio, cancélalo para que otros lo aprovechen."),
     Intencion("horarios", ["horario", "horarios", "a que hora abre", "abre", "cierra", "apertura", "cierre"],
               prioridad=4),

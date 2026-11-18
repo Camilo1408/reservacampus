@@ -126,14 +126,14 @@ async function cargarEspacios() {
       const ini = aMin(e.hora_apertura), fin = aMin(e.hora_cierre), total = fin - ini;
       const bloques = ocupado.map((o) => {
         const izq = ((aMin(o.hora_inicio) - ini) / total) * 100, ancho = ((aMin(o.hora_fin) - aMin(o.hora_inicio)) / total) * 100;
-        return `<span style="left:${izq}%;width:${ancho}%" title="${hhmm(o.hora_inicio)}-${hhmm(o.hora_fin)}"></span>`;
+        return `<span class="${o.tipo === "clase" ? "clase-b" : ""}" style="left:${izq}%;width:${ancho}%" title="${hhmm(o.hora_inicio)}-${hhmm(o.hora_fin)} ${escapar(o.etiqueta || "")}"></span>`;
       }).join("");
       return `<article class="tarjeta espacio">
         <div class="espacio-cab"><h3>${escapar(e.nombre)}</h3><span class="chip ${e.tipo}">${TIPOS[e.tipo]}</span></div>
         <div class="meta"><span>👥 ${e.capacidad} personas</span><span>📍 ${escapar(e.ubicacion)}</span></div>
         <p class="desc">${escapar(e.descripcion || "")}</p>
         <div><div class="barra-dia">${bloques}</div>
-          <div class="leyenda"><span>${hhmm(e.hora_apertura)}</span><span>${ocupado.length ? `${ocupado.length} reserva(s)` : "Libre todo el día"}</span><span>${hhmm(e.hora_cierre)}</span></div></div>
+          <div class="leyenda"><span>${hhmm(e.hora_apertura)}</span><span>${ocupado.length ? `${ocupado.filter((o) => o.tipo === "clase").length} clase(s) · ${ocupado.filter((o) => o.tipo !== "clase").length} reserva(s)` : "Libre todo el día"}</span><span>${hhmm(e.hora_cierre)}</span></div></div>
         <button class="btn primario" data-reservar="${e.id}">Reservar</button>
       </article>`;
     }).join("");
@@ -161,7 +161,7 @@ async function pintarOcupacionModal() {
   try {
     const occ = await api(C.RESERVAS_URL, `/espacios/${e.id}/ocupacion?fecha=${fecha}`, { auth: false });
     box.innerHTML = occ.length
-      ? `<b>Ocupado ese día:</b> ${occ.map((o) => `${hhmm(o.hora_inicio)}–${hhmm(o.hora_fin)}`).join(", ")}`
+      ? `<b>Ocupado ese día:</b> ${occ.map((o) => `${hhmm(o.hora_inicio)}–${hhmm(o.hora_fin)}${o.tipo === "clase" ? ` (clase: ${escapar(o.etiqueta)})` : ""}`).join(", ")}`
       : "✅ Este espacio no tiene reservas ese día.";
   } catch { box.textContent = ""; }
 }
@@ -207,7 +207,8 @@ async function cargarMisReservas() {
     cont.innerHTML = rs.map((r) => `
       <article class="tarjeta reserva">
         <div><h3>${escapar(r.espacio_nombre)}</h3>
-          <p class="sub">${fechaLarga(r.fecha)} · ${hhmm(r.hora_inicio)}–${hhmm(r.hora_fin)} · ${r.asistentes} asistente(s)${r.motivo ? " · " + escapar(r.motivo) : ""}</p></div>
+          <p class="sub">${fechaLarga(r.fecha)} · ${hhmm(r.hora_inicio)}–${hhmm(r.hora_fin)} · ${r.asistentes} asistente(s)${r.motivo ? " · " + escapar(r.motivo) : ""}</p>
+          ${r.motivo_revocacion ? `<span class="motivo">Revocada por la administración: ${escapar(r.motivo_revocacion)}</span>` : ""}</div>
         <div style="display:flex;gap:.6rem;align-items:center">
           <span class="estado ${r.estado}">${r.estado}</span>
           ${r.estado === "confirmada" && r.fecha >= hoy ? `<button class="btn peligro" data-cancelar="${r.id}">Cancelar</button>` : ""}
@@ -228,33 +229,271 @@ async function cancelar(id, luego) {
 }
 
 // ---------------------------------------------------------------- admin
+const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+const admin = { sub: "reservas", espacios: [], reservas: [], horarios: [] };
+const cerrarModales = () => $$("dialog[open]").forEach((d) => d.close());
+$$("[data-cerrar]").forEach((b) => b.addEventListener("click", cerrarModales));
+const errorEn = (form, msg) => (form.querySelector(".error").textContent = msg || "");
+
+$$(".subtab").forEach((b) => b.addEventListener("click", () => {
+  admin.sub = b.dataset.sub;
+  $$(".subtab").forEach((t) => t.classList.toggle("activo", t === b));
+  ["reservas", "espacios", "horarios"].forEach((n) => $(`#sub-${n}`).classList.toggle("oculto", n !== admin.sub));
+  cargarAdmin();
+}));
+
 async function cargarAdmin() {
   try {
-    const [st, rs] = await Promise.all([api(C.RESERVAS_URL, "/estadisticas"), api(C.RESERVAS_URL, "/reservas")]);
-    const top = st.por_espacio[0];
-    $("#stats").innerHTML = `
-      <div class="tarjeta stat"><b>${st.total_reservas}</b><span>Reservas totales</span></div>
-      <div class="tarjeta stat"><b>${st.total_reservas - st.canceladas}</b><span>Confirmadas</span></div>
-      <div class="tarjeta stat"><b>${st.canceladas}</b><span>Canceladas</span></div>
-      <div class="tarjeta stat"><b style="font-size:1.1rem">${top ? escapar(top.espacio) : "—"}</b><span>Espacio más usado</span></div>`;
-    $("#tabla-reservas tbody").innerHTML = rs.map((r) => `<tr>
-      <td>${escapar(r.espacio_nombre)}</td><td>${escapar(r.usuario_nombre)}<br><small>${escapar(r.usuario_email)}</small></td>
-      <td>${r.fecha}</td><td>${hhmm(r.hora_inicio)}–${hhmm(r.hora_fin)}</td>
-      <td><span class="estado ${r.estado}">${r.estado}</span></td>
-      <td>${r.estado === "confirmada" ? `<button class="enlace" data-acancelar="${r.id}">Cancelar</button>` : ""}</td></tr>`).join("")
-      || `<tr><td colspan="6" class="vacio">Sin reservas</td></tr>`;
-    $$("[data-acancelar]").forEach((b) => b.addEventListener("click", () => cancelar(+b.dataset.acancelar, cargarAdmin)));
+    const st = await api(C.RESERVAS_URL, "/estadisticas");
+    $("#stats").innerHTML = [
+      [st.confirmadas, "Reservas activas"], [st.revocadas, "Revocadas"], [st.canceladas, "Canceladas"],
+      [st.espacios_activos, "Espacios activos"], [st.horarios_clase, "Bloques de clase"],
+    ].map(([n, t]) => `<div class="tarjeta stat"><b>${n}</b><span>${t}</span></div>`).join("");
+    admin.espacios = await api(C.RESERVAS_URL, "/admin/espacios");
+    if (admin.sub === "reservas") await cargarReservasAdmin();
+    if (admin.sub === "espacios") pintarEspaciosAdmin();
+    if (admin.sub === "horarios") await cargarHorarios();
   } catch (err) { toast(err.message, true); }
 }
 
-$("#form-espacio").addEventListener("submit", async (e) => {
+// ----- reservas
+$("#filtro-estado").addEventListener("change", cargarReservasAdmin);
+$("#filtro-fecha-admin").addEventListener("change", cargarReservasAdmin);
+async function cargarReservasAdmin() {
+  const q = new URLSearchParams();
+  if ($("#filtro-estado").value) q.set("estado", $("#filtro-estado").value);
+  if ($("#filtro-fecha-admin").value) q.set("fecha", $("#filtro-fecha-admin").value);
+  admin.reservas = await api(C.RESERVAS_URL, `/reservas?${q}`);
+  const hoy = hoyISO();
+  $("#tabla-reservas tbody").innerHTML = admin.reservas.map((r) => `<tr>
+      <td data-label="Espacio">${escapar(r.espacio_nombre)}</td>
+      <td data-label="Usuario"><span>${escapar(r.usuario_nombre)}<br><small>${escapar(r.usuario_email)}</small></span></td>
+      <td data-label="Fecha">${r.fecha}</td>
+      <td data-label="Horario">${hhmm(r.hora_inicio)}–${hhmm(r.hora_fin)}</td>
+      <td data-label="Estado"><span><span class="estado ${r.estado}">${r.estado}</span>${r.motivo_revocacion ? `<span class="motivo">${escapar(r.motivo_revocacion)}</span>` : ""}</span></td>
+      <td class="acc">${r.estado === "confirmada" && r.fecha >= hoy ? `<button class="btn-mini rojo" data-revocar="${r.id}">Revocar</button>` : ""}</td></tr>`).join("")
+    || `<tr><td colspan="6" class="vacio">No hay reservas con esos filtros</td></tr>`;
+  $$("[data-revocar]").forEach((b) => b.addEventListener("click", () => abrirRevocar(+b.dataset.revocar)));
+}
+
+let reservaARevocar = null;
+function abrirRevocar(id) {
+  const r = admin.reservas.find((x) => x.id === id);
+  reservaARevocar = id;
+  $("#detalle-revocar").textContent = r
+    ? `${r.espacio_nombre} · ${r.fecha} · ${hhmm(r.hora_inicio)}–${hhmm(r.hora_fin)} · ${r.usuario_nombre} (${r.usuario_email})`
+    : `Reserva #${id}`;
+  $("#form-revocar").reset();
+  errorEn($("#form-revocar"));
+  $("#modal-revocar").showModal();
+}
+$("#form-revocar").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const d = Object.fromEntries(new FormData(e.target));
   try {
-    await api(C.RESERVAS_URL, "/espacios", { method: "POST", body: { ...d, capacidad: +d.capacidad } });
-    toast("Espacio creado");
-    e.target.reset();
+    await api(C.RESERVAS_URL, `/reservas/${reservaARevocar}/revocar`, { method: "POST", body: { justificacion: e.target.justificacion.value.trim() } });
+    cerrarModales();
+    toast("Reserva revocada. Se notificó al usuario.");
+    cargarAdmin();
+  } catch (err) { errorEn(e.target, err.message); }
+});
+
+// ----- espacios
+function pintarEspaciosAdmin() {
+  $("#tabla-espacios tbody").innerHTML = admin.espacios.map((e) => `<tr>
+      <td data-label="Nombre"><b>${escapar(e.nombre)}</b></td>
+      <td data-label="Tipo">${TIPOS[e.tipo]}</td>
+      <td data-label="Capacidad">${e.capacidad}</td>
+      <td data-label="Ubicación">${escapar(e.ubicacion)}</td>
+      <td data-label="Horario">${hhmm(e.hora_apertura)}–${hhmm(e.hora_cierre)}</td>
+      <td data-label="Estado"><span class="estado ${e.activo ? "activo" : "inactivo"}">${e.activo ? "Habilitado" : "Deshabilitado"}</span></td>
+      <td class="acc"><div class="acciones-fila">
+        <button class="btn-mini" data-editar="${e.id}">Editar</button>
+        <button class="btn-mini" data-toggle="${e.id}">${e.activo ? "Deshabilitar" : "Habilitar"}</button>
+        <button class="btn-mini rojo" data-eliminar="${e.id}">Eliminar</button></div></td></tr>`).join("");
+  $$("[data-editar]").forEach((b) => b.addEventListener("click", () => abrirEspacio(+b.dataset.editar)));
+  $$("[data-toggle]").forEach((b) => b.addEventListener("click", () => toggleEspacio(+b.dataset.toggle)));
+  $$("[data-eliminar]").forEach((b) => b.addEventListener("click", () => eliminarEspacio(+b.dataset.eliminar)));
+}
+
+let espacioEditando = null;
+function abrirEspacio(id = null) {
+  const f = $("#form-espacio");
+  f.reset();
+  errorEn(f);
+  espacioEditando = id;
+  $("#titulo-espacio").textContent = id ? "Editar espacio" : "Nuevo espacio";
+  if (id) {
+    const e = admin.espacios.find((x) => x.id === id);
+    ["nombre", "tipo", "capacidad", "ubicacion", "descripcion"].forEach((k) => (f[k].value = e[k] ?? ""));
+    f.hora_apertura.value = hhmm(e.hora_apertura);
+    f.hora_cierre.value = hhmm(e.hora_cierre);
+    f.activo.checked = e.activo;
+  }
+  $("#modal-espacio").showModal();
+}
+$("#btn-nuevo-espacio").addEventListener("click", () => abrirEspacio());
+$("#form-espacio").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const f = ev.target;
+  const body = {
+    nombre: f.nombre.value, tipo: f.tipo.value, capacidad: +f.capacidad.value, ubicacion: f.ubicacion.value,
+    descripcion: f.descripcion.value, hora_apertura: f.hora_apertura.value, hora_cierre: f.hora_cierre.value, activo: f.activo.checked,
+  };
+  try {
+    await api(C.RESERVAS_URL, espacioEditando ? `/espacios/${espacioEditando}` : "/espacios", { method: espacioEditando ? "PUT" : "POST", body });
+    cerrarModales();
+    toast(espacioEditando ? "Espacio actualizado" : "Espacio creado");
+    cargarAdmin();
+  } catch (err) { errorEn(f, err.message); }
+});
+async function toggleEspacio(id) {
+  const e = admin.espacios.find((x) => x.id === id);
+  try {
+    await api(C.RESERVAS_URL, `/espacios/${id}/estado`, { method: "PATCH", body: { activo: !e.activo } });
+    toast(e.activo ? "Espacio deshabilitado: ya no aparece para reservar" : "Espacio habilitado");
+    cargarAdmin();
   } catch (err) { toast(err.message, true); }
+}
+async function eliminarEspacio(id) {
+  const e = admin.espacios.find((x) => x.id === id);
+  if (!confirm(`¿Eliminar definitivamente "${e.nombre}"? También se borrarán sus horarios de clase.`)) return;
+  try {
+    await api(C.RESERVAS_URL, `/espacios/${id}`, { method: "DELETE" });
+    toast("Espacio eliminado");
+    cargarAdmin();
+  } catch (err) { toast(err.message, true); }
+}
+
+// ----- horarios de clase
+const selEspHorario = $("#filtro-espacio-horario");
+selEspHorario.addEventListener("change", cargarHorarios);
+function opcionesEspacios(select, conTodos) {
+  const actual = select.value;
+  select.innerHTML = (conTodos ? `<option value="">Todos los espacios</option>` : "") +
+    admin.espacios.map((e) => `<option value="${e.id}">${escapar(e.nombre)}</option>`).join("");
+  if ([...select.options].some((o) => o.value === actual)) select.value = actual;
+}
+async function cargarHorarios() {
+  opcionesEspacios(selEspHorario, true);
+  const id = selEspHorario.value;
+  admin.horarios = await api(C.RESERVAS_URL, `/horarios${id ? `?espacio_id=${id}` : ""}`, { auth: false });
+  $("#semana").innerHTML = DIAS.map((d, i) => {
+    const clases = admin.horarios.filter((h) => h.dia_semana === i);
+    return `<div class="dia"><h4>${d}</h4>${clases.map((h) => `<button class="clase" data-horario="${h.id}">
+        <b>${hhmm(h.hora_inicio)}–${hhmm(h.hora_fin)}</b>${escapar(h.materia)}${id ? "" : `<br><small>${escapar(h.espacio_nombre)}</small>`}
+      </button>`).join("") || `<small class="sub">Sin clases</small>`}</div>`;
+  }).join("");
+  $$("[data-horario]").forEach((b) => b.addEventListener("click", () => abrirHorario(+b.dataset.horario)));
+}
+
+let horarioEditando = null;
+function abrirHorario(id = null) {
+  const f = $("#form-horario");
+  f.reset();
+  errorEn(f);
+  opcionesEspacios(f.espacio_id, false);
+  horarioEditando = id;
+  $("#titulo-horario").textContent = id ? "Editar clase" : "Agregar clase";
+  $("#btn-borrar-horario").classList.toggle("oculto", !id);
+  if (id) {
+    const h = admin.horarios.find((x) => x.id === id);
+    ["espacio_id", "dia_semana", "materia", "docente"].forEach((k) => (f[k].value = h[k]));
+    f.hora_inicio.value = hhmm(h.hora_inicio);
+    f.hora_fin.value = hhmm(h.hora_fin);
+    f.vigente_desde.value = h.vigente_desde || "";
+    f.vigente_hasta.value = h.vigente_hasta || "";
+  } else if (selEspHorario.value) f.espacio_id.value = selEspHorario.value;
+  $("#modal-horario").showModal();
+}
+$("#btn-nuevo-horario").addEventListener("click", () => abrirHorario());
+$("#form-horario").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const f = ev.target;
+  const body = {
+    espacio_id: +f.espacio_id.value, dia_semana: +f.dia_semana.value, materia: f.materia.value, docente: f.docente.value,
+    hora_inicio: f.hora_inicio.value, hora_fin: f.hora_fin.value,
+    vigente_desde: f.vigente_desde.value || null, vigente_hasta: f.vigente_hasta.value || null,
+  };
+  try {
+    const r = await api(C.RESERVAS_URL, horarioEditando ? `/horarios/${horarioEditando}` : "/horarios", { method: horarioEditando ? "PUT" : "POST", body });
+    cerrarModales();
+    toast("Horario guardado");
+    mostrarResultado(r);
+    cargarAdmin();
+  } catch (err) { errorEn(f, err.message); }
+});
+$("#btn-borrar-horario").addEventListener("click", async () => {
+  if (!confirm("¿Eliminar este bloque de clase?")) return;
+  try {
+    await api(C.RESERVAS_URL, `/horarios/${horarioEditando}`, { method: "DELETE" });
+    cerrarModales();
+    toast("Clase eliminada");
+    cargarAdmin();
+  } catch (err) { toast(err.message, true); }
+});
+
+// ----- carga CSV
+function parsearCSV(texto) {
+  const lineas = texto.replace(/^﻿/, "").split(/\r?\n/).filter((l) => l.trim());
+  if (!lineas.length) throw new Error("El archivo está vacío");
+  const sep = (lineas[0].match(/;/g) || []).length > (lineas[0].match(/,/g) || []).length ? ";" : ",";
+  const celdas = (l) => {
+    const out = []; let cur = "", q = false;
+    for (const ch of l) {
+      if (ch === '"') q = !q;
+      else if (ch === sep && !q) { out.push(cur.trim()); cur = ""; }
+      else cur += ch;
+    }
+    out.push(cur.trim());
+    return out;
+  };
+  const cab = celdas(lineas[0]).map((c) => c.toLowerCase());
+  const faltan = ["espacio", "dia", "hora_inicio", "hora_fin", "materia"].filter((c) => !cab.includes(c));
+  if (faltan.length) throw new Error(`Faltan columnas en el encabezado: ${faltan.join(", ")}`);
+  return lineas.slice(1).map((l) => {
+    const v = celdas(l);
+    return Object.fromEntries(["espacio", "dia", "hora_inicio", "hora_fin", "materia", "docente"]
+      .map((k) => [k, cab.includes(k) ? v[cab.indexOf(k)] ?? "" : ""]));
+  });
+}
+function mostrarResultado(r) {
+  const box = $("#resultado-csv");
+  let html = "";
+  if (r.errores?.length) html += `<div class="aviso mal"><b>No se cargó nada. Revisa:</b><ul>${r.errores.map((e) => `<li>${escapar(e)}</li>`).join("")}</ul></div>`;
+  else if (r.creados) html += `<div class="aviso ok">✅ ${r.creados} bloque(s) de clase cargados.</div>`;
+  if (r.conflictos?.length) {
+    html += `<div class="aviso alerta"><b>⚠️ ${r.conflictos.length} reserva(s) chocan con las clases.</b> Puedes revocarlas:<ul>${r.conflictos.map((c) =>
+      `<li>${escapar(c.espacio)} · ${c.fecha} ${hhmm(c.hora_inicio)}–${hhmm(c.hora_fin)} · ${escapar(c.usuario_nombre)}
+        <button class="btn-mini rojo" data-revocar-c="${c.reserva_id}">Revocar</button></li>`).join("")}</ul></div>`;
+  }
+  box.innerHTML = html;
+  $$("[data-revocar-c]").forEach((b) => b.addEventListener("click", () => {
+    abrirRevocar(+b.dataset.revocarC);
+    $("#form-revocar").justificacion.value = "El espacio fue asignado a un horario de clase fijo en esa franja.";
+  }));
+}
+$("#form-csv").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const f = ev.target;
+  try {
+    const filas = parsearCSV(await f.archivo.files[0].text());
+    if (!filas.length) throw new Error("El archivo no tiene filas de datos");
+    const r = await api(C.RESERVAS_URL, "/horarios/carga", { method: "POST", body: {
+      filas, reemplazar: f.reemplazar.checked, vigente_desde: f.vigente_desde.value || null, vigente_hasta: f.vigente_hasta.value || null,
+    } });
+    mostrarResultado(r);
+    if (r.creados) { toast(`${r.creados} clases cargadas`); f.reset(); cargarAdmin(); }
+  } catch (err) { mostrarResultado({ errores: [err.message] }); }
+});
+$("#btn-plantilla").addEventListener("click", () => {
+  const csv = "espacio,dia,hora_inicio,hora_fin,materia,docente\n" +
+    "Laboratorio de Cómputo 1,lunes,08:00,10:00,Programación I,Ing. Laura Gómez\n" +
+    "Laboratorio de Redes,miercoles,10:00,12:00,Redes de Computadores,Ing. Paula Díaz\n" +
+    "Sala de Estudio B-201,jueves,14:00,16:00,Tutoría de Cálculo,Monitoría\n";
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
+  a.download = "plantilla_horarios.csv";
+  a.click();
 });
 
 // ---------------------------------------------------------------- notificaciones

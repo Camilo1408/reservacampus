@@ -70,7 +70,7 @@ def usuario_id(cred: HTTPAuthorizationCredentials | None = Depends(bearer)) -> i
 @app.get("/health", tags=["sistema"])
 def health():
     return {"servicio": "notificaciones", "estado": "ok", "cola_conectada": consumidor.conectado,
-            "eventos_procesados": consumidor.procesados, "correo_configurado": bool(config.SMTP_HOST)}
+            "eventos_procesados": consumidor.procesados, "correo_configurado": bool(config.BREVO_API_KEY or config.SMTP_HOST)}
 
 
 @app.get("/notificaciones", response_model=list[NotificacionOut], tags=["notificaciones"])
