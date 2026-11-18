@@ -1,7 +1,7 @@
 import os
 import sys
 
-os.environ["DATABASE_URL"] = "sqlite:///./test_auth.db"
+os.environ["DATABASE_URL"] = os.getenv("TEST_DATABASE_URL", "sqlite:///./test_auth.db")
 os.environ["JWT_SECRET"] = "secreto-test"
 os.environ["REDIS_URL"] = ""
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))

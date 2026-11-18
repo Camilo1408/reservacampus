@@ -2,7 +2,7 @@ import os
 import sys
 from datetime import datetime, timedelta, timezone
 
-os.environ["DATABASE_URL"] = "sqlite:///./test_reservas.db"
+os.environ["DATABASE_URL"] = os.getenv("TEST_DATABASE_URL", "sqlite:///./test_reservas.db")
 os.environ["JWT_SECRET"] = "secreto-test"
 os.environ["REDIS_URL"] = ""
 os.environ["TAREAS_INTERVALO_SEG"] = "0"

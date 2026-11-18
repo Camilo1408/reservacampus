@@ -171,12 +171,14 @@ def resumen_usuarios(_: UsuarioToken = Depends(solo_admin), db: Session = Depend
     def fila(uid):
         return salida.setdefault(uid, {"reservas": 0, "activas": 0, "inasistencias": 0, "reportes_recibidos": 0,
                                        "sanciones": 0, "sancion_activa": None})
-    for uid, estado, fecha, n in db.execute(select(Reserva.usuario_id, Reserva.estado, Reserva.fecha >= hoy,
+    # Se agrupa por fecha y se compara en Python: agrupar por "fecha >= :hoy" falla en PostgreSQL
+    # (cada aparición del parámetro es una expresión distinta para el GROUP BY).
+    for uid, estado, fecha, n in db.execute(select(Reserva.usuario_id, Reserva.estado, Reserva.fecha,
                                                    func.count(Reserva.id))
-                                            .group_by(Reserva.usuario_id, Reserva.estado, Reserva.fecha >= hoy)).all():
+                                            .group_by(Reserva.usuario_id, Reserva.estado, Reserva.fecha)).all():
         f = fila(uid)
         f["reservas"] += n
-        if estado == "confirmada" and fecha:
+        if estado == "confirmada" and fecha >= hoy:
             f["activas"] += n
         if estado == "inasistencia":
             f["inasistencias"] += n
