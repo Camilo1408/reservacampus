@@ -245,6 +245,57 @@ input::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 .columnas-csv { display: flex; flex-wrap: wrap; gap: .35rem; margin: .6rem 0 .4rem; }
 .columnas-csv span { font-family: ui-monospace, Consolas, monospace; font-size: .78rem; background: #eef0fb; color: var(--primario); padding: .2rem .5rem; border-radius: 6px; }
 .ayuda-csv { font-size: .85rem; margin-bottom: 1rem; line-height: 1.45; }
+/* ---------- banner de sanción ---------- */
+.banner { display: flex; align-items: center; gap: .8rem; max-width: 1200px; margin: 1rem auto 0; width: calc(100% - 2 * clamp(1rem, 4vw, 2.5rem));
+  padding: .9rem 1.1rem; border-radius: 12px; background: #fff3e0; color: #7a4100; border: 1px solid #ffd59e; line-height: 1.45; }
+.banner-icono { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: #ffb547; color: #fff; font-weight: 800; flex-shrink: 0; }
+.enlace.centro { justify-self: center; padding: .2rem; }
+.titulo-seccion { margin: 2rem 0 .8rem; font-size: 1.15rem; }
+
+/* ---------- mis reservas ---------- */
+.reserva-acciones { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.estado.llegada { background: #e8f4ff; color: #1769aa; }
+.estado.inasistencia { background: var(--peligro-bg); color: var(--peligro); }
+.chip-nivel { font-size: .72rem; font-weight: 700; padding: .15rem .5rem; border-radius: 99px; background: #eceef4; color: var(--suave); white-space: nowrap; vertical-align: middle; }
+.chip-nivel.n1 { background: #fff8e1; color: #9a6b00; }
+.chip-nivel.n2 { background: #fff3e0; color: #b25e00; }
+.chip-nivel.n3 { background: #fdecef; color: #c8364a; }
+.chip-nivel.n4 { background: #c8364a; color: #fff; }
+
+/* ---------- ficha de usuario ---------- */
+.modal-ancho { width: min(860px, 96vw); max-height: 92vh; overflow-y: auto; padding: 0; }
+.usuario-cab { display: flex; gap: 1rem; align-items: flex-start; padding: 1.4rem 1.4rem 1rem; border-bottom: 1px solid var(--borde); position: sticky; top: 0; background: #fff; z-index: 2; }
+.avatar { width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; background: var(--primario); color: #fff; font-weight: 800; font-size: 1.1rem; flex-shrink: 0; }
+.usuario-datos { flex: 1; min-width: 0; }
+.usuario-datos .sub { margin: .2rem 0 .5rem; font-size: .88rem; overflow-wrap: anywhere; }
+.chips { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; }
+.cerrar-x { font-size: 1.1rem; }
+.u-acciones { display: flex; flex-wrap: wrap; gap: .5rem; padding: 1rem 1.4rem 0; }
+.btn-accion { border: 1px solid var(--borde); background: #fff; border-radius: 10px; padding: .55rem .85rem; font-weight: 600; font-size: .86rem; cursor: pointer; color: var(--texto); transition: all .15s; }
+.btn-accion:hover { border-color: var(--primario); color: var(--primario); background: #f5f6ff; }
+.btn-accion.verde { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 35%, transparent); }
+.btn-accion.verde:hover { background: var(--ok-bg); }
+.btn-accion.ambar { color: #b25e00; border-color: #ffd59e; }
+.btn-accion.ambar:hover { background: #fff3e0; }
+.btn-accion.rojo { color: var(--peligro); border-color: color-mix(in srgb, var(--peligro) 30%, transparent); }
+.btn-accion.rojo:hover { background: var(--peligro-bg); }
+.u-metricas { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .6rem; padding: 1rem 1.4rem; }
+.u-metricas div { background: #f7f8fc; border-radius: 12px; padding: .7rem .8rem; }
+.u-metricas b { display: block; font-size: 1.4rem; }
+.u-metricas span { color: var(--suave); font-size: .78rem; font-weight: 600; }
+.subtabs-u { margin: 0 1.4rem; }
+.u-contenido { padding: 1rem 1.4rem 1.4rem; min-height: 160px; }
+.item-linea { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding: .85rem 0; border-bottom: 1px solid var(--borde); }
+.item-linea:last-child { border-bottom: 0; }
+.item-linea .sub { margin: .25rem 0; font-size: .9rem; }
+.item-linea > div:first-child { min-width: 0; }
+.dialogo-texto { text-align: left; width: min(460px, 94vw); }
+.dialogo-texto h3, .dialogo-texto > .sub, .dialogo-texto .dialogo-icono { text-align: center; }
+
+/* ---------- incidencias ---------- */
+.incidencias-cols { display: grid; gap: 1.2rem; }
+.celda-texto { white-space: normal !important; min-width: 200px; max-width: 320px; }
+
 @media (max-width: 860px) {
   .auth, .horarios-cols { grid-template-columns: 1fr; }
   .auth { gap: 1.5rem; }
@@ -271,7 +322,17 @@ input::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   .stats > :last-child:nth-child(odd) { grid-column: 1 / -1; }
   .nav { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); overflow: visible; }
   .nav button { padding: .5rem .3rem; font-size: .85rem; }
-  .subtabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; }
+  .subtabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(98px, 1fr)); width: 100%; }
+  .subtabs-u { width: auto; }
+  .u-metricas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .u-metricas div:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .usuario-cab, .u-acciones, .u-metricas, .u-contenido { padding-left: 1rem; padding-right: 1rem; }
+  .subtabs-u { margin: 0 1rem; }
+  .btn-accion { flex: 1 1 calc(50% - .5rem); }
+  .reserva-acciones { justify-content: flex-start; width: 100%; }
+  .reserva-acciones .btn { flex: 1; }
+  .item-linea { flex-direction: column; gap: .5rem; }
+  .celda-texto { min-width: 0; max-width: none; }
   .subtab { padding: .55rem .3rem; font-size: .82rem; white-space: normal; }
   .controles { flex-direction: column; }
   .controles select, .controles input, .controles .btn, .controles .sel { width: 100%; flex: none; min-width: 0; }

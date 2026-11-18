@@ -64,6 +64,7 @@ class ReservaOut(BaseModel):
     motivo: str
     estado: str
     motivo_revocacion: str | None = None
+    llegada_confirmada_en: datetime | None = None
     creada_en: datetime
 
 

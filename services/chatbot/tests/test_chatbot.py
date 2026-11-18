@@ -20,6 +20,9 @@ from app.reglas import detectar, extraer_fecha, extraer_hora  # noqa: E402
     ("cuál es la duración máxima", "reglas"),
     ("a qué hora abre el laboratorio", "horarios"),
     ("gracias!", "despedida"),
+    ("¿cómo confirmo llegada?", "llegada"),
+    ("la sala sigue ocupada y no han salido", "reporte"),
+    ("¿por qué estoy sancionado?", "sanciones"),
 ])
 def test_detectar_intencion(mensaje, esperada):
     assert detectar(mensaje).nombre == esperada

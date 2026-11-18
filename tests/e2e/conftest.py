@@ -38,7 +38,9 @@ def base_url():
     tmp = Path(tempfile.mkdtemp(prefix="e2e_reservas_"))
     env_comun = {**os.environ, "JWT_SECRET": "e2e-secreto-0123456789-0123456789-abcdef", "REDIS_URL": "",
                  "GROQ_API_KEY": "", "CORS_ORIGINS": "*", "PYTHONUNBUFFERED": "1",
-                 "RESERVAS_URL": f"http://127.0.0.1:{PUERTOS['reservas']}"}
+                 "RESERVAS_URL": f"http://127.0.0.1:{PUERTOS['reservas']}",
+                 "AUTH_URL": f"http://127.0.0.1:{PUERTOS['auth']}",
+                 "FRONTEND_URL": f"http://127.0.0.1:{PUERTO_WEB}"}
     procesos = []
     for servicio, puerto in PUERTOS.items():
         env = {**env_comun, "DATABASE_URL": f"sqlite:///{(tmp / f'{servicio}.db').as_posix()}"}

@@ -10,6 +10,12 @@ envVarGroups:
         value: America/Bogota
       - key: CORS_ORIGINS
         value: https://reservacampus-web-gcr3.onrender.com
+      - key: FRONTEND_URL
+        value: https://reservacampus-web-gcr3.onrender.com
+      - key: AUTH_URL
+        value: https://reservacampus-auth-gcr3.onrender.com
+      - key: NOTIF_URL
+        value: https://reservacampus-notificaciones-gcr3.onrender.com
 
 databases:
   - name: reservacampus-db
@@ -40,6 +46,8 @@ services:
         value: admin@reservacampus.edu
       - key: ADMIN_PASSWORD
         value: Admin12345
+      - key: REDIS_URL          # publica eventos de cuenta (recuperar contraseña, cambios de estado)
+        fromService: { type: keyvalue, name: reservacampus-cola, property: connectionString }
 
   - type: web
     name: reservacampus-reservas
@@ -55,6 +63,8 @@ services:
         fromDatabase: { name: reservacampus-db, property: connectionString }
       - key: REDIS_URL
         fromService: { type: keyvalue, name: reservacampus-cola, property: connectionString }
+      - key: TAREAS_TOKEN       # protege POST /tareas/ejecutar (lo llama el cron de GitHub Actions)
+        sync: false
 
   - type: web
     name: reservacampus-notificaciones

@@ -146,6 +146,42 @@
     });
   }
 
+  // Diálogo que pide un texto (motivo, nota). Devuelve el texto o null si se cancela.
+  function pedirTexto({ titulo, mensaje = "", etiqueta = "Motivo", aceptar = "Guardar", minimo = 10, peligro = false, valor = "" } = {}) {
+    return new Promise((resolver) => {
+      const d = document.createElement("dialog");
+      d.className = "modal dialogo-confirmar dialogo-texto";
+      d.innerHTML = `<div class="dialogo-icono ${peligro ? "peligro" : ""}">${peligro ? "!" : "✎"}</div>
+        <h3></h3><p class="sub"></p>
+        <form class="form" method="dialog">
+          <label><span class="etq"></span><textarea rows="3" required maxlength="300"></textarea></label>
+          <p class="error" role="alert"></p>
+          <div class="modal-acciones"><button type="button" class="btn secundario" data-r="0">Cancelar</button>
+          <button type="submit" class="btn ${peligro ? "peligro-solido" : "primario"}"></button></div>
+        </form>`;
+      d.querySelector("h3").textContent = titulo;
+      d.querySelector("p.sub").textContent = mensaje;
+      d.querySelector(".etq").textContent = etiqueta;
+      d.querySelector("button[type=submit]").textContent = aceptar;
+      const ta = d.querySelector("textarea");
+      ta.minLength = minimo;
+      ta.value = valor;
+      document.body.append(d);
+      const fin = (v) => { d.close(); d.remove(); resolver(v); };
+      d.querySelector("form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const v = ta.value.trim();
+        if (v.length < minimo) { d.querySelector(".error").textContent = `Escribe al menos ${minimo} caracteres.`; return; }
+        fin(v);
+      });
+      d.querySelector('[data-r="0"]').addEventListener("click", () => fin(null));
+      d.addEventListener("click", (e) => e.stopPropagation());
+      d.addEventListener("cancel", (e) => { e.preventDefault(); fin(null); });
+      d.showModal();
+      ta.focus();
+    });
+  }
+
   // Cerrar cualquier diálogo .modal al hacer clic en el fondo
   document.addEventListener("click", (e) => {
     cerrar();
@@ -160,6 +196,7 @@
 
   window.UI = {
     confirmar,
+    pedirTexto,
     mejorar(raiz = document) {
       raiz.querySelectorAll("select").forEach(mejorarSelect);
       raiz.querySelectorAll('input[type="file"]').forEach(mejorarArchivo);

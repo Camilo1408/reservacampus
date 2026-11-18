@@ -12,24 +12,44 @@ from . import config
 from .database import Base, SessionLocal, engine, get_db
 from .deps import UsuarioToken, solo_admin, usuario_actual
 from .eventos import publicador
-from .models import Espacio, HorarioClase, Reserva
+from .models import Espacio, HorarioClase, Reporte, Reserva, Sancion
 from .reglas import ReglaVioladaError, se_solapan, validar_capacidad, validar_horario
 from .schemas import (CargaHorariosIn, ConflictoOut, DisponibilidadOut, EspacioIn, EspacioOut, EstadoEspacioIn,
                       Franja, HorarioIn, HorarioOut, ReservaIn, ReservaOut, ResultadoCarga, RevocarIn)
 from .semilla import ESPACIOS_INICIALES, HORARIOS_INICIALES
+from . import reloj, sanciones
+from .incidencias import router as router_incidencias
+from .tareas import Programador
+
+programador = Programador()
 
 log = logging.getLogger("reservas")
 DIAS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
 
 
+COLUMNAS_NUEVAS = {
+    "reservas": {
+        "motivo_revocacion": "VARCHAR(300)",
+        "llegada_confirmada_en": "TIMESTAMP",
+        "aviso_previo": "BOOLEAN DEFAULT FALSE NOT NULL",
+        "aviso_inicio": "BOOLEAN DEFAULT FALSE NOT NULL",
+        "aviso_final": "BOOLEAN DEFAULT FALSE NOT NULL",
+    },
+}
+
+
 def migrar():
     """Migración ligera: agrega columnas nuevas a tablas ya existentes (create_all no altera tablas)."""
     insp = inspect(engine)
-    if "reservas" in insp.get_table_names():
-        columnas = {c["name"] for c in insp.get_columns("reservas")}
-        if "motivo_revocacion" not in columnas:
-            with engine.begin() as con:
-                con.execute(text("ALTER TABLE reservas ADD COLUMN motivo_revocacion VARCHAR(300)"))
+    tablas = insp.get_table_names()
+    with engine.begin() as con:
+        for tabla, columnas in COLUMNAS_NUEVAS.items():
+            if tabla not in tablas:
+                continue
+            existentes = {c["name"] for c in insp.get_columns(tabla)}
+            for col, ddl in columnas.items():
+                if col not in existentes:
+                    con.execute(text(f"ALTER TABLE {tabla} ADD COLUMN {col} {ddl}"))
 
 
 def sembrar():
@@ -52,7 +72,10 @@ async def lifespan(app: FastAPI):
     migrar()
     Base.metadata.create_all(engine)
     sembrar()
+    if config.TAREAS_INTERVALO_SEG > 0:
+        programador.start()
     yield
+    programador.detener.set()
 
 
 app = FastAPI(
@@ -63,6 +86,7 @@ app = FastAPI(
     root_path=config.ROOT_PATH,
     lifespan=lifespan,
 )
+app.include_router(router_incidencias)
 app.add_middleware(CORSMiddleware, allow_origins=config.CORS_ORIGINS, allow_methods=["*"], allow_headers=["*"])
 
 
@@ -113,7 +137,7 @@ def ocupacion(db: Session, espacio_id: int, fecha: date) -> list[Franja]:
 
 def conflictos_de_horario(db: Session, h: HorarioClase) -> list[Reserva]:
     """Reservas futuras confirmadas que chocan con un bloque de clase."""
-    hoy = datetime.now(config.ZONA).date()
+    hoy = reloj.ahora().date()
     rs = db.scalars(select(Reserva).where(Reserva.espacio_id == h.espacio_id, Reserva.estado == "confirmada",
                                           Reserva.fecha >= hoy)).all()
     return [r for r in rs if h.aplica(r.fecha) and se_solapan(h.hora_inicio, h.hora_fin, r.hora_inicio, r.hora_fin)]
@@ -135,7 +159,28 @@ def revocar(db: Session, r: Reserva, justificacion: str, admin: UsuarioToken):
 # ---------------------------------------------------------------- sistema
 @app.get("/health", tags=["sistema"])
 def health():
-    return {"servicio": "reservas", "estado": "ok", "cola_eventos": publicador.disponible()}
+    return {"servicio": "reservas", "estado": "ok", "cola_eventos": publicador.disponible(),
+            "programador_activo": programador.is_alive(),
+            "ultima_ejecucion": programador.ultima_hora, "ultimo_resultado": programador.ultima}
+
+
+def estado_cuenta(authorization: str | None) -> str | None:
+    """Consulta al auth-service el estado actual de la cuenta (REST síncrono entre servicios).
+    Si auth no responde se permite continuar (disponibilidad > consistencia para este dato)."""
+    if not config.AUTH_URL or not authorization:
+        return None
+    import json
+    import urllib.error
+    import urllib.request
+    try:
+        req = urllib.request.Request(f"{config.AUTH_URL}/me", headers={"Authorization": authorization})
+        with urllib.request.urlopen(req, timeout=8) as r:
+            return json.loads(r.read()).get("estado")
+    except urllib.error.HTTPError as e:
+        return "bloqueado" if e.code == 403 else None
+    except Exception:
+        log.warning("auth-service no respondió; se omite la verificación de estado")
+        return None
 
 
 # ---------------------------------------------------------------- espacios
@@ -203,7 +248,7 @@ def eliminar_espacio(espacio_id: int, _: UsuarioToken = Depends(solo_admin), db:
     e = db.get(Espacio, espacio_id)
     if not e:
         raise HTTPException(404, "Espacio no encontrado")
-    hoy = datetime.now(config.ZONA).date()
+    hoy = reloj.ahora().date()
     pendientes = db.scalar(select(func.count(Reserva.id)).where(
         Reserva.espacio_id == espacio_id, Reserva.estado == "confirmada", Reserva.fecha >= hoy))
     if pendientes:
@@ -224,7 +269,7 @@ def disponibilidad(fecha: date | None = None, hora_inicio: time | None = None, h
                    tipo: str | None = None, db: Session = Depends(get_db)):
     """Estado de los espacios activos en una fecha (reservas + clases fijas). Con un rango horario, `libre`
     indica si el espacio está disponible en ese rango; si no, indica si no tiene ocupación ese día."""
-    fecha = fecha or datetime.now(config.ZONA).date()
+    fecha = fecha or reloj.ahora().date()
     salida = []
     for e in listar_espacios(tipo=tipo, capacidad_min=0, db=db):
         ocupadas = ocupacion(db, e.id, fecha)
@@ -329,7 +374,17 @@ def cargar_horarios(datos: CargaHorariosIn, _: UsuarioToken = Depends(solo_admin
 
 # ---------------------------------------------------------------- reservas
 @app.post("/reservas", response_model=ReservaOut, status_code=201, tags=["reservas"])
-def crear_reserva(datos: ReservaIn, u: UsuarioToken = Depends(usuario_actual), db: Session = Depends(get_db)):
+def crear_reserva(datos: ReservaIn, request: Request, u: UsuarioToken = Depends(usuario_actual),
+                  db: Session = Depends(get_db)):
+    ahora = reloj.ahora()
+    s = sanciones.sancion_activa(db, u.id, ahora)
+    if s:
+        hasta = f"hasta el {s.hasta:%d/%m/%Y a las %H:%M}" if s.hasta else "hasta que un administrador la levante"
+        raise HTTPException(status.HTTP_403_FORBIDDEN, f"Tienes una sanción vigente {hasta}. Motivo: {s.motivo}")
+    estado = estado_cuenta(request.headers.get("authorization"))
+    if estado in ("suspendido", "bloqueado"):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, f"Tu cuenta está {estado}: no puedes hacer reservas. "
+                                                       "Comunícate con la administración.")
     # Bloqueo pesimista de la fila del espacio para evitar dobles reservas concurrentes (Postgres)
     espacio = db.scalar(select(Espacio).where(Espacio.id == datos.espacio_id).with_for_update())
     if not espacio or not espacio.activo:
@@ -346,7 +401,7 @@ def crear_reserva(datos: ReservaIn, u: UsuarioToken = Depends(usuario_actual), d
             raise HTTPException(status.HTTP_409_CONFLICT,
                                 f"El espacio no está disponible: {causa} de {f.hora_inicio:%H:%M} a {f.hora_fin:%H:%M}")
 
-    hoy = datetime.now(config.ZONA).date()
+    hoy = ahora.date()
     activas = db.scalar(select(func.count(Reserva.id)).where(
         Reserva.usuario_id == u.id, Reserva.estado == "confirmada", Reserva.fecha >= hoy))
     if activas >= config.MAX_RESERVAS_ACTIVAS and not u.es_admin:
@@ -366,7 +421,7 @@ def crear_reserva(datos: ReservaIn, u: UsuarioToken = Depends(usuario_actual), d
 def mis_reservas(solo_activas: bool = False, u: UsuarioToken = Depends(usuario_actual), db: Session = Depends(get_db)):
     q = select(Reserva).where(Reserva.usuario_id == u.id)
     if solo_activas:
-        q = q.where(Reserva.estado == "confirmada", Reserva.fecha >= datetime.now(config.ZONA).date())
+        q = q.where(Reserva.estado == "confirmada", Reserva.fecha >= reloj.ahora().date())
     return [a_salida(r) for r in db.scalars(q.order_by(Reserva.fecha.desc(), Reserva.hora_inicio.desc())).all()]
 
 
@@ -420,4 +475,8 @@ def estadisticas(_: UsuarioToken = Depends(solo_admin), db: Session = Depends(ge
             "canceladas": conteo.get("cancelada", 0), "revocadas": conteo.get("revocada", 0),
             "espacios_activos": db.scalar(select(func.count(Espacio.id)).where(Espacio.activo.is_(True))),
             "horarios_clase": db.scalar(select(func.count(HorarioClase.id))),
+            "inasistencias": conteo.get("inasistencia", 0),
+            "sanciones_activas": sum(1 for x in db.scalars(select(Sancion).where(Sancion.estado == "vigente"))
+                                     if x.activa(reloj.ahora())),
+            "reportes": db.scalar(select(func.count(Reporte.id)).where(Reporte.estado == "valido")),
             "por_espacio": [{"espacio": n, "reservas": c} for n, c in por_espacio]}

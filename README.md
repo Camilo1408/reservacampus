@@ -68,6 +68,28 @@ k6 run -e BASE=http://localhost:8080/api tests/carga/k6-reservas.js
   (`docs/horarios_ejemplo.csv`). Si chocan con reservas existentes, el sistema lo avisa y permite revocarlas.
 - **Revocar reservas:** con justificación obligatoria; el usuario la recibe en la app y por correo (Brevo).
 
+## Gestión de usuarios (admin → Usuarios)
+Lista con búsqueda y filtros (activos, suspendidos, bloqueados, con sanción) y una ficha por usuario con:
+historial de reservas (incluida la hora de llegada), sanciones, reportes hechos y recibidos, y avisos enviados.
+Acciones: **suspender** (entra pero no reserva), **bloquear** (no puede iniciar sesión), **reactivar**,
+**restablecer contraseña** (enlace de un solo uso por correo, válido 30 min), **enviar alerta** (con plantillas),
+**sanción manual** y **cambiar rol**. Los usuarios también pueden recuperar su contraseña desde el login.
+
+## Llegada, reportes y sanciones
+| Momento (respecto al inicio) | Qué pasa |
+|---|---|
+| −10 min | Correo: "tu reserva empieza en 10 min" con botón **Confirmar llegada** |
+| 0 min | Correo: "confirma que estás en el espacio" |
+| +10 min | Correo: último aviso. Desde aquí el titular puede **reportar espacio ocupado** si la reserva anterior no lo entregó |
+| +20 min | Sin confirmación → reserva en **inasistencia** + sanción |
+
+**Sanciones escalonadas** (por no entregar el espacio o no confirmar llegada): 1ª → no puede reservar el día
+siguiente · 2ª → 3 días · 3ª → 1 semana · 4ª → suspensión hasta que un admin la levante. Un reporte anulado por el
+admin no cuenta como reincidencia. En **Incidencias** el admin ve y gestiona sanciones vigentes y reportes.
+
+El programador corre cada minuto dentro del servicio de reservas. En Render gratuito, donde los servicios duermen,
+un cron de GitHub Actions (`.github/workflows/tareas.yml`) lo despierta cada 10 min de 6:00 a 22:00.
+
 ## Correo
 Render gratuito bloquea SMTP, así que el correo sale por la API HTTP de **Brevo** (300 correos/día gratis):
 define `BREVO_API_KEY` y `MAIL_FROM` (remitente verificado) en el servicio de notificaciones.

@@ -64,3 +64,46 @@ def test_revocacion_incluye_justificacion(client, monkeypatch):
 def test_html_escapa_contenido():
     from app.consumidor import html_correo
     assert "<script>" not in html_correo("<script>", "t", "m")
+
+
+def admin_headers():
+    t = jwt.encode({"sub": "99", "rol": "admin", "nombre": "Admin", "exp": datetime.now(timezone.utc) + timedelta(hours=1)},
+                   "secreto-test", algorithm="HS256")
+    return {"Authorization": f"Bearer {t}"}
+
+
+def test_admin_envia_alerta(client, monkeypatch):
+    from app import main
+    enviados = []
+    monkeypatch.setattr(main, "enviar_correo", lambda *a: enviados.append(a) or True)
+    alerta = {"usuario_id": 7, "usuario_email": "ana@u.edu", "usuario_nombre": "Ana",
+              "asunto": "Uso del espacio", "mensaje": "Recuerda entregar la sala a tiempo."}
+    assert client.post("/alertas", json=alerta, headers=headers(7)).status_code == 403
+    r = client.post("/alertas", json=alerta, headers=admin_headers())
+    assert r.status_code == 201 and r.json()["correo_enviado"] and enviados[0][0] == "ana@u.edu"
+    assert client.get("/notificaciones", headers=headers(7)).json()[0]["titulo"].endswith("Uso del espacio")
+    assert len(client.get("/admin/usuarios/7/notificaciones", headers=admin_headers()).json()) == 1
+
+
+@pytest.mark.parametrize("tipo,datos,texto", [
+    ("reserva.recordatorio", {"hora_inicio": "10:00"}, "10:00"),
+    ("sancion.aplicada", {"nivel": 2, "motivo": "No entregaste", "descripcion": "3 días.", "hasta": "21/11"}, "nivel 2"),
+    ("usuario.password_reset", {"minutos": 30, "enlace": "https://x/?reset=abc"}, "30 minutos"),
+    ("usuario.estado_cambiado", {"estado": "suspendido", "motivo": "Reincidencia"}, "suspendido"),
+])
+def test_plantillas_nuevas(client, monkeypatch, tipo, datos, texto):
+    from app import consumidor
+    correos = []
+    monkeypatch.setattr(consumidor, "enviar_correo", lambda *a: correos.append(a) or True)
+    from app.database import SessionLocal
+    with SessionLocal() as db:
+        n = consumidor.procesar_evento(db, f"{tipo}-1", tipo, {**EVENTO, **datos})
+    assert texto in n.titulo + n.mensaje
+    if "enlace" in datos:
+        assert correos[0][4] == datos["enlace"] and correos[0][5]  # botón con enlace
+
+
+def test_boton_solo_con_url_http():
+    from app.consumidor import html_correo
+    assert "href" not in html_correo("A", "t", "m", "javascript:alert(1)", "Ir")
+    assert 'href="https://x"' in html_correo("A", "t", "m", "https://x", "Ir")

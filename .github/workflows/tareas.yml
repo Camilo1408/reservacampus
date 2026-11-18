@@ -1,0 +1,25 @@
+# Programador externo para Render gratuito.
+# Los servicios gratuitos se duermen tras 15 min sin tráfico; este cron llama al endpoint de tareas cada
+# 10 minutos entre 6:00 y 22:00 (hora de Colombia, UTC-5). Mientras el servicio está despierto, su hilo
+# interno revisa cada minuto los recordatorios, avisos de llegada e inasistencias.
+# Presupuesto: ~16 h/día × 30 días ≈ 480 h de las 750 h gratuitas al mes.
+name: Programador de tareas
+
+on:
+  schedule:
+    - cron: "*/10 11-23 * * *"   # 06:00-18:59 Colombia
+    - cron: "*/10 0-2 * * *"     # 19:00-21:59 Colombia
+  workflow_dispatch: {}
+
+jobs:
+  ejecutar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ejecutar tareas de reservas
+        env:
+          TAREAS_TOKEN: ${{ secrets.TAREAS_TOKEN }}
+          URL: https://reservacampus-reservas-gcr3.onrender.com
+        run: |
+          curl -sS --retry 3 --retry-delay 20 --max-time 120 -X POST "$URL/tareas/ejecutar" \
+            -H "X-Tareas-Token: $TAREAS_TOKEN" -w "\nHTTP %{http_code}\n"

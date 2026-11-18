@@ -46,6 +46,23 @@ INTENCIONES = [
               prioridad=4),
     Intencion("tipos", ["tipos de espacio", "que espacios", "cuales espacios", "laboratorio", "auditorio",
                         "cancha", "salas de estudio", "lista de espacios"], prioridad=3),
+    Intencion("llegada", ["confirmar llegada", "confirmo llegada", "confirmar asistencia", "llegue", "ya estoy"],
+              prioridad=8,
+              respuesta="Debes **confirmar tu llegada** en **Mis reservas** desde 10 min antes hasta 20 min después "
+                        "del inicio. Te avisamos por correo 10 min antes, al inicio y a los 10 min. Si no confirmas "
+                        "a los 20 min, la reserva queda como inasistencia y recibes una sanción."),
+    Intencion("reporte", ["sigue ocupad", "siguen ocupand", "no han salido", "no entregan", "no entregaron",
+                          "siguen adentro", "reportar", "no me dejan entrar", "no han entregado"],
+              prioridad=9,
+              respuesta="Si el ocupante anterior no entrega el espacio, espera **10 minutos de tolerancia** y luego "
+                        "usa **Reportar espacio ocupado** en tu reserva (Mis reservas). Se sanciona a quien no "
+                        "entregó y tu llegada queda confirmada."),
+    Intencion("sanciones", ["sancion", "sanciones", "sancionado", "suspendido", "suspension", "castigo", "penalizacion"],
+              prioridad=7,
+              respuesta="Las sanciones son escalonadas por no entregar el espacio o no confirmar llegada:\n"
+                        "1ª vez: no puedes reservar el día siguiente.\n2ª: 3 días.\n3ª: una semana.\n"
+                        "4ª: suspensión hasta que un administrador te reactive.\n"
+                        "Puedes ver tus sanciones en **Mis reservas**."),
     Intencion("contacto", ["contacto", "soporte", "correo", "telefono", "humano", "persona", "queja"], prioridad=2,
               respuesta="Puedes escribir a **soporte@reservacampus.edu** o acercarte a la oficina de "
                         "Bienestar Universitario (Bloque A, piso 1) de lunes a viernes, 8:00 a 17:00."),

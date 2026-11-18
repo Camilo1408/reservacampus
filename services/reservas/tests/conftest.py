@@ -5,6 +5,8 @@ from datetime import datetime, timedelta, timezone
 os.environ["DATABASE_URL"] = "sqlite:///./test_reservas.db"
 os.environ["JWT_SECRET"] = "secreto-test"
 os.environ["REDIS_URL"] = ""
+os.environ["TAREAS_INTERVALO_SEG"] = "0"
+os.environ["TAREAS_TOKEN"] = "token-tareas-test"
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 import jwt  # noqa: E402

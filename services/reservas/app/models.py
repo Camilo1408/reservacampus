@@ -37,11 +37,67 @@ class Reserva(Base):
     hora_fin: Mapped[time] = mapped_column(Time)
     asistentes: Mapped[int] = mapped_column(Integer, default=1)
     motivo: Mapped[str] = mapped_column(String(200), default="")
-    estado: Mapped[str] = mapped_column(String(20), default="confirmada")  # confirmada | cancelada | revocada
+    # confirmada | cancelada | revocada | inasistencia
+    estado: Mapped[str] = mapped_column(String(20), default="confirmada")
     motivo_revocacion: Mapped[str | None] = mapped_column(String(300), nullable=True)
     creada_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    # Confirmación de llegada (hora local) y avisos ya enviados (idempotencia del programador)
+    llegada_confirmada_en: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    aviso_previo: Mapped[bool] = mapped_column(Boolean, default=False)
+    aviso_inicio: Mapped[bool] = mapped_column(Boolean, default=False)
+    aviso_final: Mapped[bool] = mapped_column(Boolean, default=False)
 
     espacio: Mapped[Espacio] = relationship(back_populates="reservas")
+
+    @property
+    def inicio_dt(self) -> datetime:
+        return datetime.combine(self.fecha, self.hora_inicio)
+
+    @property
+    def fin_dt(self) -> datetime:
+        return datetime.combine(self.fecha, self.hora_fin)
+
+
+class Sancion(Base):
+    """Restricción para reservar. Nivel 1: día siguiente · 2: 3 días · 3: 7 días · 4: suspensión indefinida."""
+    __tablename__ = "sanciones"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    usuario_id: Mapped[int] = mapped_column(Integer, index=True)
+    usuario_email: Mapped[str] = mapped_column(String(120))
+    usuario_nombre: Mapped[str] = mapped_column(String(80))
+    nivel: Mapped[int] = mapped_column(Integer)
+    tipo: Mapped[str] = mapped_column(String(20))  # ocupacion | inasistencia | manual
+    motivo: Mapped[str] = mapped_column(String(300))
+    reserva_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    desde: Mapped[datetime] = mapped_column(DateTime)
+    hasta: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)  # None = hasta que el admin la levante
+    estado: Mapped[str] = mapped_column(String(20), default="vigente")  # vigente | levantada | anulada
+    nota_admin: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    creada_por: Mapped[str] = mapped_column(String(80), default="sistema")
+    creada_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    def activa(self, ahora: datetime) -> bool:
+        return self.estado == "vigente" and (self.hasta is None or self.hasta > ahora)
+
+
+class Reporte(Base):
+    """Reporte de un usuario porque el ocupante anterior no entregó el espacio a tiempo."""
+    __tablename__ = "reportes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    reserva_id: Mapped[int] = mapped_column(Integer, unique=True)  # reserva de quien reporta
+    reportante_id: Mapped[int] = mapped_column(Integer, index=True)
+    reportante_nombre: Mapped[str] = mapped_column(String(80))
+    reserva_reportada_id: Mapped[int] = mapped_column(Integer)
+    reportado_id: Mapped[int] = mapped_column(Integer, index=True)
+    reportado_nombre: Mapped[str] = mapped_column(String(80))
+    reportado_email: Mapped[str] = mapped_column(String(120))
+    espacio: Mapped[str] = mapped_column(String(80))
+    comentario: Mapped[str] = mapped_column(String(300), default="")
+    estado: Mapped[str] = mapped_column(String(20), default="valido")  # valido | anulado
+    sancion_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    creado_en: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now())
 
 
 class HorarioClase(Base):

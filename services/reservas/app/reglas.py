@@ -1,7 +1,7 @@
 """Reglas de negocio puras (sin BD) para validar una reserva. Fáciles de probar unitariamente."""
 from datetime import date, datetime, time, timedelta
 
-from . import config
+from . import config, reloj
 
 
 class ReglaVioladaError(ValueError):
@@ -18,7 +18,7 @@ def se_solapan(a_ini: time, a_fin: time, b_ini: time, b_fin: time) -> bool:
 
 def validar_horario(fecha: date, inicio: time, fin: time, apertura: time, cierre: time,
                     ahora: datetime | None = None) -> None:
-    ahora = ahora or datetime.now(config.ZONA)
+    ahora = ahora or reloj.ahora()
     hoy = ahora.date()
     if inicio >= fin:
         raise ReglaVioladaError("La hora de fin debe ser posterior a la de inicio")
@@ -31,7 +31,7 @@ def validar_horario(fecha: date, inicio: time, fin: time, apertura: time, cierre
         raise ReglaVioladaError(f"La duración máxima es {config.DURACION_MAX // 60} horas")
     if inicio < apertura or fin > cierre:
         raise ReglaVioladaError(f"El espacio atiende de {apertura:%H:%M} a {cierre:%H:%M}")
-    if fecha < hoy or (fecha == hoy and inicio <= ahora.time().replace(tzinfo=None)):
+    if fecha < hoy or (fecha == hoy and inicio <= ahora.time()):
         raise ReglaVioladaError("No se puede reservar en el pasado")
     if fecha > hoy + timedelta(days=config.DIAS_ANTICIPACION):
         raise ReglaVioladaError(f"Solo se puede reservar con máximo {config.DIAS_ANTICIPACION} días de anticipación")

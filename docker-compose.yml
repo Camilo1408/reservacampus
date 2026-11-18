@@ -8,6 +8,9 @@ x-comun: &comun
     JWT_SECRET: ${JWT_SECRET:-dev-secret-cambiar-por-uno-largo-0123456789}
     CORS_ORIGINS: http://localhost:8080
     APP_TZ: America/Bogota
+    FRONTEND_URL: http://localhost:8080
+    AUTH_URL: http://auth:8000
+    NOTIF_URL: http://notificaciones:8000
 
 services:
   postgres:
@@ -43,7 +46,10 @@ services:
       ROOT_PATH: /api/auth
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@reservacampus.edu}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin12345}
-    depends_on: { postgres: { condition: service_healthy } }
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
 
   reservas:
     <<: *comun
@@ -65,6 +71,8 @@ services:
       DATABASE_URL: postgresql://reservacampus:reservacampus@postgres:5432/notificaciones_db
       REDIS_URL: redis://redis:6379/0
       ROOT_PATH: /api/notificaciones
+      BREVO_API_KEY: ${BREVO_API_KEY:-}
+      MAIL_FROM: ${MAIL_FROM:-}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}

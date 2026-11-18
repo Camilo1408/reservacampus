@@ -23,3 +23,16 @@ DURACION_MIN = 30          # minutos
 DURACION_MAX = 180         # minutos
 DIAS_ANTICIPACION = 30
 MAX_RESERVAS_ACTIVAS = 3
+
+# Integraciones
+AUTH_URL = os.getenv("AUTH_URL", "").rstrip("/")        # para consultar el estado de la cuenta al reservar
+NOTIF_URL = os.getenv("NOTIF_URL", "").rstrip("/")      # para despertar al consumidor en Render gratuito
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:8080").rstrip("/")
+TAREAS_TOKEN = os.getenv("TAREAS_TOKEN", "")            # protege POST /tareas/ejecutar (cron externo)
+TAREAS_INTERVALO_SEG = int(os.getenv("TAREAS_INTERVALO_SEG", "60"))
+
+# Llegada y reportes (minutos)
+RECORDATORIO_ANTES = 10      # aviso previo al inicio
+TOLERANCIA_ENTREGA = 10      # el ocupante anterior tiene 10 min para entregar el espacio
+AVISO_SIN_CONFIRMAR = 10     # segundo aviso si no ha confirmado llegada
+LIMITE_CONFIRMACION = 20     # sin confirmar a los 20 min -> inasistencia y sanción
