@@ -6,7 +6,7 @@ from datetime import date, datetime, time
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import delete, func, inspect, select, text
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from . import config
 from .database import Base, SessionLocal, engine, get_db
@@ -279,9 +279,22 @@ def disponibilidad(fecha: date | None = None, hora_inicio: time | None = None, h
     """Estado de los espacios activos en una fecha (reservas + clases fijas). Con un rango horario, `libre`
     indica si el espacio está disponible en ese rango; si no, indica si no tiene ocupación ese día."""
     fecha = fecha or reloj.ahora().date()
+    espacios = listar_espacios(tipo=tipo, capacidad_min=0, db=db)
+    # Optimización (informe de pruebas): 2 consultas en total en lugar de 2 por espacio (problema N+1).
+    ids = [e.id for e in espacios]
+    por_espacio: dict[int, list[Franja]] = {i: [] for i in ids}
+    for h in db.scalars(select(HorarioClase).where(HorarioClase.espacio_id.in_(ids),
+                                                   HorarioClase.dia_semana == fecha.weekday())):
+        if h.aplica(fecha):
+            por_espacio[h.espacio_id].append(Franja(hora_inicio=h.hora_inicio, hora_fin=h.hora_fin, tipo="clase",
+                                                    etiqueta=h.materia))
+    for r in db.scalars(select(Reserva).where(Reserva.espacio_id.in_(ids), Reserva.fecha == fecha,
+                                              Reserva.estado == "confirmada")):
+        por_espacio[r.espacio_id].append(Franja(hora_inicio=r.hora_inicio, hora_fin=r.hora_fin, tipo="reserva",
+                                                etiqueta="Reservado"))
     salida = []
-    for e in listar_espacios(tipo=tipo, capacidad_min=0, db=db):
-        ocupadas = ocupacion(db, e.id, fecha)
+    for e in espacios:
+        ocupadas = sorted(por_espacio[e.id], key=lambda f: f.hora_inicio)
         if hora_inicio and hora_fin:
             dentro = e.hora_apertura <= hora_inicio and hora_fin <= e.hora_cierre
             libre = dentro and not any(se_solapan(hora_inicio, hora_fin, f.hora_inicio, f.hora_fin) for f in ocupadas)
@@ -428,7 +441,7 @@ def crear_reserva(datos: ReservaIn, request: Request, u: UsuarioToken = Depends(
 
 @app.get("/reservas/mias", response_model=list[ReservaOut], tags=["reservas"])
 def mis_reservas(solo_activas: bool = False, u: UsuarioToken = Depends(usuario_actual), db: Session = Depends(get_db)):
-    q = select(Reserva).where(Reserva.usuario_id == u.id)
+    q = select(Reserva).options(selectinload(Reserva.espacio)).where(Reserva.usuario_id == u.id)
     if solo_activas:
         q = q.where(Reserva.estado == "confirmada", Reserva.fecha >= reloj.ahora().date())
     reportadas = set(db.scalars(select(Reporte.reserva_id).where(Reporte.reportante_id == u.id)).all())
@@ -441,7 +454,7 @@ def mis_reservas(solo_activas: bool = False, u: UsuarioToken = Depends(usuario_a
 @app.get("/reservas", response_model=list[ReservaOut], tags=["admin"])
 def todas_las_reservas(fecha: date | None = None, estado: str | None = None, _: UsuarioToken = Depends(solo_admin),
                        db: Session = Depends(get_db)):
-    q = select(Reserva)
+    q = select(Reserva).options(selectinload(Reserva.espacio))
     if fecha:
         q = q.where(Reserva.fecha == fecha)
     if estado:
