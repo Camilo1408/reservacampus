@@ -1,0 +1,244 @@
+{
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {
+            "consultas": {
+                "name": "consultas",
+                "path": "::consultas",
+                "id": "e344df1b9bdd7e27d70b78d4773fd334",
+                "groups": {},
+                "checks": {
+                        "disponibilidad 200": {
+                            "name": "disponibilidad 200",
+                            "path": "::consultas::disponibilidad 200",
+                            "id": "1b667a4856ed836dff1c09ad961c50bc",
+                            "passes": 606,
+                            "fails": 0
+                        },
+                        "espacios 200": {
+                            "fails": 0,
+                            "name": "espacios 200",
+                            "path": "::consultas::espacios 200",
+                            "id": "b2d803a6f99d17aab803b8b8d12b9f3b",
+                            "passes": 606
+                        },
+                        "mis reservas 200": {
+                            "name": "mis reservas 200",
+                            "path": "::consultas::mis reservas 200",
+                            "id": "a6f258cc80f5c623bdeda94824d47dba",
+                            "passes": 606,
+                            "fails": 0
+                        }
+                    }
+            }
+        },
+        "checks": {
+            "login 200": {
+                "id": "48b06dc5cde7f6ebb606ad7da726a2a5",
+                "passes": 70,
+                "fails": 0,
+                "name": "login 200",
+                "path": "::login 200"
+            },
+            "chat 200 o 429": {
+                "fails": 0,
+                "name": "chat 200 o 429",
+                "path": "::chat 200 o 429",
+                "id": "a39fcfc320c5f562f76ca4b17e554321",
+                "passes": 44
+            }
+        }
+    },
+    "metrics": {
+        "http_req_tls_handshaking": {
+            "min": 0,
+            "med": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 38.18170500000004,
+            "max": 76.6536,
+            "avg": 1.2432803202479341
+        },
+        "http_req_failed": {
+            "passes": 11,
+            "fails": 1925,
+            "thresholds": {
+                "rate<0.05": false
+            },
+            "value": 0.005681818181818182
+        },
+        "checks": {
+            "passes": 1932,
+            "fails": 0,
+            "value": 1
+        },
+        "t_espacios": {
+            "avg": 372.0662843234319,
+            "min": 160.0302,
+            "med": 289.47245,
+            "p(90)": 708.2287,
+            "p(95)": 806.725025,
+            "p(99)": 1087.2972350000032,
+            "max": 1804.194,
+            "thresholds": {
+                "p(95)<1500": false
+            }
+        },
+        "vus": {
+            "value": 1,
+            "min": 0,
+            "max": 20
+        },
+        "group_duration": {
+            "p(95)": 3967.9354249999997,
+            "p(99)": 4319.853580000001,
+            "max": 4587.3619,
+            "avg": 1807.8449932343246,
+            "min": 537.0563,
+            "med": 1500.8042,
+            "p(90)": 3638.2741
+        },
+        "t_disponibilidad": {
+            "med": 675.1825,
+            "p(90)": 2205.4424,
+            "p(95)": 2396.6394499999997,
+            "p(99)": 2898.4846650000004,
+            "max": 3195.7261,
+            "avg": 974.0406800330027,
+            "min": 188.9535,
+            "thresholds": {
+                "p(95)<2000": true
+            }
+        },
+        "http_req_receiving": {
+            "avg": 0.9910987086776862,
+            "min": 0,
+            "med": 0,
+            "p(90)": 2.96945,
+            "p(95)": 7.7943999999999996,
+            "p(99)": 12.203285000000001,
+            "max": 26.3786
+        },
+        "http_req_waiting": {
+            "max": 31234.1456,
+            "avg": 625.525821280991,
+            "min": 157.7493,
+            "med": 392.54205,
+            "p(90)": 1496.75505,
+            "p(95)": 2101.0793750000003,
+            "p(99)": 2640.8706300000035
+        },
+        "t_mis_reservas": {
+            "avg": 458.56913663366294,
+            "min": 169.1793,
+            "med": 307.00329999999997,
+            "p(90)": 904.98245,
+            "p(95)": 1109.01975,
+            "p(99)": 1508.3659499999999,
+            "max": 2188.664
+        },
+        "http_req_duration": {
+            "avg": 626.6961247417353,
+            "min": 160.0302,
+            "med": 393.8741,
+            "p(90)": 1498.84395,
+            "p(95)": 2101.0793750000003,
+            "p(99)": 2641.4221200000034,
+            "max": 31235.7897
+        },
+        "iteration_duration": {
+            "p(95)": 5126.16905,
+            "p(99)": 6529.349750000006,
+            "max": 7983.1077,
+            "avg": 2956.8924051155113,
+            "min": 1537.4784,
+            "med": 2603.6213,
+            "p(90)": 4794.39845
+        },
+        "iterations": {
+            "count": 606,
+            "rate": 3.3010766234254008
+        },
+        "http_req_sending": {
+            "med": 0,
+            "p(90)": 0.5375,
+            "p(95)": 0.5979,
+            "p(99)": 0.8238750000000019,
+            "max": 12.9374,
+            "avg": 0.17920475206611583,
+            "min": 0
+        },
+        "errores_negocio": {
+            "passes": 0,
+            "fails": 1932,
+            "value": 0
+        },
+        "t_login": {
+            "p(99)": 774.3644440000003,
+            "max": 850.7905,
+            "avg": 457.05031857142853,
+            "min": 311.2733,
+            "med": 442.68039999999996,
+            "p(90)": 626.6834200000001,
+            "p(95)": 694.0460949999999
+        },
+        "http_reqs": {
+            "count": 1936,
+            "rate": 10.546013767246825
+        },
+        "t_chat": {
+            "avg": 1256.4219227272727,
+            "min": 162.7471,
+            "med": 894.6752,
+            "p(90)": 2827.7456200000006,
+            "p(95)": 2984.7650900000003,
+            "p(99)": 3426.4915480000004,
+            "max": 3669.3454
+        },
+        "http_req_blocked": {
+            "min": 0,
+            "med": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 70.95006000000045,
+            "max": 145.1061,
+            "avg": 2.3027631198347107
+        },
+        "http_req_connecting": {
+            "min": 0,
+            "med": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 28.453565000000015,
+            "max": 84.2177,
+            "avg": 1.0247403925619833
+        },
+        "data_received": {
+            "count": 3656429,
+            "rate": 19917.743064545735
+        },
+        "vus_max": {
+            "value": 20,
+            "min": 20,
+            "max": 20
+        },
+        "http_req_duration{expected_response:true}": {
+            "p(99)": 2645.530488,
+            "max": 31235.7897,
+            "avg": 629.242141454545,
+            "min": 160.0302,
+            "med": 394.599,
+            "p(90)": 1500.5129,
+            "p(95)": 2102.93018
+        },
+        "data_sent": {
+            "count": 215485,
+            "rate": 1173.81600032809
+        }
+    },
+    "setup_data": {
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJhZG1pbkByZXNlcnZhY2FtcHVzLmVkdSIsIm5vbWJyZSI6IkFkbWluaXN0cmFkb3IiLCJyb2wiOiJhZG1pbiIsImlhdCI6MTc5NDk4NTU3NywiZXhwIjoxNzk0OTkyNzc3fQ.NnuzybwLJpY-VE0LavJgNNl-Ivn_---Jjt9LXRCVPn8"
+    }
+}

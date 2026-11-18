@@ -1,0 +1,115 @@
+auth/tests/test_auth.py::test_registro_y_login
+auth/tests/test_auth.py::test_correo_duplicado
+auth/tests/test_auth.py::test_password_debil
+auth/tests/test_auth.py::test_nombre_con_script_rechazado
+auth/tests/test_auth.py::test_login_incorrecto_y_bloqueo
+auth/tests/test_auth.py::test_token_invalido
+auth/tests/test_auth.py::test_solo_admin_lista_usuarios
+auth/tests/test_auth.py::test_admin_busca_usuarios
+auth/tests/test_auth.py::test_bloquear_impide_login_y_reactivar
+auth/tests/test_auth.py::test_suspendido_puede_entrar_y_me_lo_informa
+auth/tests/test_auth.py::test_admin_no_se_bloquea_a_si_mismo
+auth/tests/test_auth.py::test_recuperar_password_con_enlace
+auth/tests/test_auth.py::test_admin_genera_enlace_de_recuperacion
+auth/tests/test_auth.py::test_cambiar_password_propia
+reservas/tests/test_incidencias.py::test_confirmar_llegada_solo_en_la_ventana
+reservas/tests/test_incidencias.py::test_confirmar_tarde_no_se_permite
+reservas/tests/test_incidencias.py::test_linea_de_tiempo_sin_confirmar_termina_en_sancion
+reservas/tests/test_incidencias.py::test_confirmada_no_genera_avisos_ni_sancion
+reservas/tests/test_incidencias.py::test_servicio_dormido_procesa_inasistencia_al_despertar
+reservas/tests/test_incidencias.py::test_endpoint_tareas_requiere_token
+reservas/tests/test_incidencias.py::test_reportar_ocupante_anterior
+reservas/tests/test_incidencias.py::test_no_se_puede_reportar_sin_reserva_anterior
+reservas/tests/test_incidencias.py::test_escalamiento_de_sanciones[1-1-None]
+reservas/tests/test_incidencias.py::test_escalamiento_de_sanciones[2-2-3]
+reservas/tests/test_incidencias.py::test_escalamiento_de_sanciones[3-3-7]
+reservas/tests/test_incidencias.py::test_escalamiento_de_sanciones[4-4-None]
+reservas/tests/test_incidencias.py::test_escalamiento_de_sanciones[5-4-None]
+reservas/tests/test_incidencias.py::test_reporte_anulado_no_cuenta_para_reincidencia
+reservas/tests/test_incidencias.py::test_admin_sancion_manual_y_levantar
+reservas/tests/test_incidencias.py::test_admin_resumen_e_historial
+reservas/tests/test_reservas.py::test_solapamiento
+reservas/tests/test_reservas.py::test_horarios_invalidos[ini0-fin0]
+reservas/tests/test_reservas.py::test_horarios_invalidos[ini1-fin1]
+reservas/tests/test_reservas.py::test_horarios_invalidos[ini2-fin2]
+reservas/tests/test_reservas.py::test_horarios_invalidos[ini3-fin3]
+reservas/tests/test_reservas.py::test_no_reservar_en_pasado
+reservas/tests/test_reservas.py::test_lista_espacios_sembrados
+reservas/tests/test_reservas.py::test_crear_reserva_publica_evento
+reservas/tests/test_reservas.py::test_requiere_login
+reservas/tests/test_reservas.py::test_conflicto_de_horario
+reservas/tests/test_reservas.py::test_capacidad_excedida
+reservas/tests/test_reservas.py::test_maximo_reservas_activas
+reservas/tests/test_reservas.py::test_cancelar_solo_dueno
+reservas/tests/test_reservas.py::test_disponibilidad
+reservas/tests/test_reservas.py::test_crear_espacio_solo_admin
+reservas/tests/test_reservas.py::test_clase_bloquea_reserva
+reservas/tests/test_reservas.py::test_crear_horario_reporta_conflictos
+reservas/tests/test_reservas.py::test_carga_masiva_csv
+reservas/tests/test_reservas.py::test_revocar_con_justificacion
+reservas/tests/test_reservas.py::test_deshabilitar_y_eliminar_espacio
+reservas/tests/test_reservas.py::test_editar_espacio
+reservas/tests/test_reservas.py::test_espacio_recreativo_con_actividades
+reservas/tests/test_reservas.py::test_inyeccion_sql_en_filtros_no_tiene_efecto[' OR 1=1--]
+reservas/tests/test_reservas.py::test_inyeccion_sql_en_filtros_no_tiene_efecto[sala_estudio' UNION SELECT * FROM reservas--]
+reservas/tests/test_reservas.py::test_inyeccion_sql_en_filtros_no_tiene_efecto[1; DROP TABLE espacios]
+notificaciones/tests/test_notificaciones.py::test_evento_genera_notificacion_idempotente
+notificaciones/tests/test_notificaciones.py::test_marcar_leida_solo_dueno
+notificaciones/tests/test_notificaciones.py::test_revocacion_incluye_justificacion
+notificaciones/tests/test_notificaciones.py::test_html_escapa_contenido
+notificaciones/tests/test_notificaciones.py::test_admin_envia_alerta
+notificaciones/tests/test_notificaciones.py::test_plantillas_nuevas[reserva.recordatorio-datos0-10:00]
+notificaciones/tests/test_notificaciones.py::test_plantillas_nuevas[sancion.aplicada-datos1-nivel 2]
+notificaciones/tests/test_notificaciones.py::test_plantillas_nuevas[usuario.password_reset-datos2-30 minutos]
+notificaciones/tests/test_notificaciones.py::test_plantillas_nuevas[usuario.estado_cambiado-datos3-suspendido]
+notificaciones/tests/test_notificaciones.py::test_boton_solo_con_url_http
+chatbot/tests/test_actividades.py::test_detectar_actividad[quiero un espacio para jugar futbol-deportes]
+chatbot/tests/test_actividades.py::test_detectar_actividad[y para jugar video juegos-videojuegos]
+chatbot/tests/test_actividades.py::test_detectar_actividad[hay algo para jugar ajedrez?-juegos de mesa]
+chatbot/tests/test_actividades.py::test_detectar_actividad[necesito un laboratorio para programar-programaci\xf3n y pr\xe1cticas]
+chatbot/tests/test_actividades.py::test_detectar_actividad[d\xf3nde puedo estudiar para el parcial-estudiar]
+chatbot/tests/test_actividades.py::test_detectar_actividad[\xbfqu\xe9 hay libre hoy?-None]
+chatbot/tests/test_actividades.py::test_etiqueta_definida_por_admin
+chatbot/tests/test_actividades.py::test_sirve_para
+chatbot/tests/test_actividades.py::test_extraer_personas_y_franjas
+chatbot/tests/test_actividades.py::test_videojuegos_sin_espacio_creado_no_ofrece_cancha
+chatbot/tests/test_actividades.py::test_futbol_ofrece_la_cancha
+chatbot/tests/test_actividades.py::test_futbol_a_hora_ocupada
+chatbot/tests/test_actividades.py::test_capacidad
+chatbot/tests/test_actividades.py::test_jugar_ambiguo_lista_lo_que_existe
+chatbot/tests/test_actividades.py::test_al_crear_sala_gamer_se_ofrece_para_videojuegos
+chatbot/tests/test_actividades.py::test_al_crear_sala_gamer_sirve_para_juegos_de_mesa
+chatbot/tests/test_actividades.py::test_actividad_nueva_no_catalogada
+chatbot/tests/test_actividades.py::test_jugar_ambiguo_incluye_sala_recreativa
+chatbot/tests/test_actividades.py::test_actividad_libre[hay espacio para hacer yoga?-yoga]
+chatbot/tests/test_actividades.py::test_actividad_libre[necesito un lugar para practicar danza ma\xf1ana-danza]
+chatbot/tests/test_actividades.py::test_actividad_libre[hay sala para hoy?-None]
+chatbot/tests/test_actividades.py::test_actividad_libre[algo para 10 personas-None]
+chatbot/tests/test_actividades.py::test_yoga_sin_espacio_dice_que_no_hay
+chatbot/tests/test_actividades.py::test_actividad_en_descripcion_de_espacio_nuevo
+chatbot/tests/test_actividades.py::test_pide_espacio[dame consejos para organizar un grupo de estudio eficiente-False]
+chatbot/tests/test_actividades.py::test_pide_espacio[c\xf3mo puedo concentrarme mejor al estudiar-False]
+chatbot/tests/test_actividades.py::test_pide_espacio[quiero jugar ajedrez ma\xf1ana-True]
+chatbot/tests/test_actividades.py::test_pide_espacio[y para jugar video juegos-True]
+chatbot/tests/test_actividades.py::test_pide_espacio[\xbfhay cancha ma\xf1ana?-True]
+chatbot/tests/test_actividades.py::test_pide_espacio[busco sala para estudiar-True]
+chatbot/tests/test_actividades.py::test_consejo_de_estudio_no_responde_disponibilidad
+chatbot/tests/test_chatbot.py::test_detectar_intencion[hola-saludo]
+chatbot/tests/test_chatbot.py::test_detectar_intencion[\xbfC\xf3mo reservo una sala?-como_reservar]
+chatbot/tests/test_chatbot.py::test_detectar_intencion[quiero cancelar mi reserva-cancelar]
+chatbot/tests/test_chatbot.py::test_detectar_intencion[\xbfqu\xe9 salas est\xe1n libres ma\xf1ana?-disponibilidad]
+chatbot/tests/test_chatbot.py::test_detectar_intencion[mu\xe9strame mis reservas-mis_reservas]
+chatbot/tests/test_chatbot.py::test_detectar_intencion[cu\xe1l es la duraci\xf3n m\xe1xima-reglas]
+chatbot/tests/test_chatbot.py::test_detectar_intencion[a qu\xe9 hora abre el laboratorio-horarios]
+chatbot/tests/test_chatbot.py::test_detectar_intencion[gracias!-despedida]
+chatbot/tests/test_chatbot.py::test_detectar_intencion[\xbfc\xf3mo confirmo llegada?-llegada]
+chatbot/tests/test_chatbot.py::test_detectar_intencion[la sala sigue ocupada y no han salido-reporte]
+chatbot/tests/test_chatbot.py::test_detectar_intencion[\xbfpor qu\xe9 estoy sancionado?-sanciones]
+chatbot/tests/test_chatbot.py::test_detectar_intencion[necesito un laboratorio ma\xf1ana para 25 personas-disponibilidad]
+chatbot/tests/test_chatbot.py::test_detectar_intencion[busco una sala para estudiar-disponibilidad]
+chatbot/tests/test_chatbot.py::test_detectar_intencion[\xbfqu\xe9 laboratorios hay?-tipos]
+chatbot/tests/test_chatbot.py::test_sin_intencion
+chatbot/tests/test_chatbot.py::test_saludo_largo_no_es_saludo
+chatbot/tests/test_chatbot.py::test_extraer_fecha_y_hora
+chatbot/tests/test_chatbot.py::test_endpoint_reglas_y_respaldo
+chatbot/tests/test_chatbot.py::test_mensaje_demasiado_largo

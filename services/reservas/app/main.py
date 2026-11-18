@@ -176,14 +176,14 @@ def health():
 def estado_cuenta(authorization: str | None) -> str | None:
     """Consulta al auth-service el estado actual de la cuenta (REST síncrono entre servicios).
     Si auth no responde se permite continuar (disponibilidad > consistencia para este dato)."""
-    if not config.AUTH_URL or not authorization:
+    if not config.AUTH_URL.startswith(("http://", "https://")) or not authorization:  # mitigación Bandit B310
         return None
     import json
     import urllib.error
     import urllib.request
     try:
         req = urllib.request.Request(f"{config.AUTH_URL}/me", headers={"Authorization": authorization})
-        with urllib.request.urlopen(req, timeout=8) as r:
+        with urllib.request.urlopen(req, timeout=8) as r:  # nosec B310 - esquema validado arriba
             return json.loads(r.read()).get("estado")
     except urllib.error.HTTPError as e:
         return "bloqueado" if e.code == 403 else None

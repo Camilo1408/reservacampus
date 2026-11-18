@@ -27,7 +27,7 @@ bearer = HTTPBearer(auto_error=False)
 COLUMNAS_NUEVAS = {
     "estado": "VARCHAR(20) DEFAULT 'activo' NOT NULL",
     "motivo_estado": "VARCHAR(300)",
-    "reset_token_hash": "VARCHAR(128)",
+    "reset_token_hash": "VARCHAR(128)",  # nosec B105 - es un tipo de columna, no una contraseña
     "reset_expira": "TIMESTAMP WITH TIME ZONE",
     "ultimo_acceso": "TIMESTAMP WITH TIME ZONE",
 }

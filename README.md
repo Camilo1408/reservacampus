@@ -1,5 +1,8 @@
 # ReservaCampus — Plataforma distribuida de reserva de espacios universitarios
 
+> 📄 **Entregables del proyecto** (arquitectura, API y BD, chatbot, informe de pruebas, manuales, presentación y
+> guía de exposición): [`docs/entregables/`](docs/entregables/LEEME.md) · App: https://reservacampus-web-gcr3.onrender.com
+
 Proyecto final de Ingeniería de Software II. Los estudiantes reservan salas de estudio, laboratorios,
 auditorios y canchas. Incluye un asistente virtual híbrido (reglas + IA con Groq).
 

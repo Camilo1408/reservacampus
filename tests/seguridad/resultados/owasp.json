@@ -1,0 +1,180 @@
+{
+  "fecha": "2026-11-18 02:32",
+  "controles": [
+    {
+      "owasp": "A01",
+      "control": "Endpoint de administrador sin token",
+      "esperado": "401",
+      "obtenido": "401",
+      "ok": true
+    },
+    {
+      "owasp": "A01",
+      "control": "Endpoint de administrador con token de estudiante",
+      "esperado": "403",
+      "obtenido": "403",
+      "ok": true
+    },
+    {
+      "owasp": "A01",
+      "control": "IDOR: cancelar la reserva de otro usuario",
+      "esperado": "404 (no revela que existe)",
+      "obtenido": "404",
+      "ok": true
+    },
+    {
+      "owasp": "A01",
+      "control": "Estudiante intenta revocar una reserva (acción de admin)",
+      "esperado": "403",
+      "obtenido": "403",
+      "ok": true
+    },
+    {
+      "owasp": "A01",
+      "control": "Endpoint del programador sin token de tareas",
+      "esperado": "403",
+      "obtenido": "403",
+      "ok": true
+    },
+    {
+      "owasp": "A02",
+      "control": "JWT con rol cambiado a admin (firma inválida)",
+      "esperado": "401",
+      "obtenido": "401",
+      "ok": true
+    },
+    {
+      "owasp": "A02",
+      "control": "JWT con algoritmo 'none'",
+      "esperado": "401",
+      "obtenido": "401",
+      "ok": true
+    },
+    {
+      "owasp": "A02",
+      "control": "La API nunca devuelve el hash de la contraseña",
+      "esperado": "sin campo password_hash",
+      "obtenido": "campos: ['creado_en', 'email', 'estado', 'id', 'motivo_estado', 'nombre', 'rol', 'ultimo_acceso']",
+      "ok": true
+    },
+    {
+      "owasp": "A02",
+      "control": "Transporte cifrado (HTTPS) en todos los servicios",
+      "esperado": "https",
+      "obtenido": "https",
+      "ok": true
+    },
+    {
+      "owasp": "A03",
+      "control": "Inyección SQL en parámetro de filtro (?tipo=' OR 1=1--)",
+      "esperado": "sin datos filtrados (200 vacío o bloqueo WAF)",
+      "obtenido": "403 bloqueado por el WAF de Cloudflare (capa previa); la app además usa consultas parametrizadas",
+      "ok": true
+    },
+    {
+      "owasp": "A03",
+      "control": "Inyección SQL en el login (admin'--)",
+      "esperado": "401/422, sin acceso",
+      "obtenido": "401",
+      "ok": true
+    },
+    {
+      "owasp": "A03",
+      "control": "XSS: etiquetas HTML en el nombre de registro",
+      "esperado": "422 (rechazado)",
+      "obtenido": "422",
+      "ok": true
+    },
+    {
+      "owasp": "A03",
+      "control": "XSS: '<' y '>' eliminados del motivo de la reserva",
+      "esperado": "sin '<script>'",
+      "obtenido": "motivo guardado: 'scriptalert(1)/scriptPrueba'",
+      "ok": true
+    },
+    {
+      "owasp": "A05",
+      "control": "Cabeceras de seguridad (nosniff, X-Frame-Options, Referrer-Policy)",
+      "esperado": "presentes",
+      "obtenido": "todas presentes",
+      "ok": true
+    },
+    {
+      "owasp": "A05",
+      "control": "CORS rechaza orígenes no autorizados",
+      "esperado": "sin Access-Control-Allow-Origin",
+      "obtenido": "400, ACAO=None",
+      "ok": true
+    },
+    {
+      "owasp": "A05",
+      "control": "CORS acepta el frontend oficial",
+      "esperado": "origen permitido",
+      "obtenido": "https://reservacampus-web-gcr3.onrender.com",
+      "ok": true
+    },
+    {
+      "owasp": "A05",
+      "control": "Errores de validación sin trazas internas",
+      "esperado": "sin 'Traceback'",
+      "obtenido": "422",
+      "ok": true
+    },
+    {
+      "owasp": "A07",
+      "control": "Contraseña débil rechazada en el registro",
+      "esperado": "422",
+      "obtenido": "422",
+      "ok": true
+    },
+    {
+      "owasp": "A07",
+      "control": "Login no revela si el correo existe",
+      "esperado": "mensaje idéntico",
+      "obtenido": "mismo mensaje: True",
+      "ok": true
+    },
+    {
+      "owasp": "A07",
+      "control": "Recuperar contraseña no revela si el correo existe",
+      "esperado": "respuesta idéntica",
+      "obtenido": "idéntica",
+      "ok": true
+    },
+    {
+      "owasp": "A07",
+      "control": "Token de restablecimiento falso o vencido",
+      "esperado": "400",
+      "obtenido": "400",
+      "ok": true
+    },
+    {
+      "owasp": "LLM01",
+      "control": "Prompt injection: pedir que revele sus instrucciones",
+      "esperado": "no revela el prompt de sistema",
+      "obtenido": "Lo siento, pero no puedo ayudar con eso.…",
+      "ok": true
+    },
+    {
+      "owasp": "LLM10",
+      "control": "Mensaje de más de 500 caracteres",
+      "esperado": "422",
+      "obtenido": "422",
+      "ok": true
+    },
+    {
+      "owasp": "LLM10",
+      "control": "Límite de mensajes por minuto en el chatbot (protege la cuota de IA)",
+      "esperado": "429",
+      "obtenido": "429 tras 14 mensajes",
+      "ok": true
+    },
+    {
+      "owasp": "A07",
+      "control": "Bloqueo tras 5 intentos fallidos de login",
+      "esperado": "429 al 6.º intento",
+      "obtenido": "códigos: [401, 401, 429, 429, 429, 429, 429]",
+      "ok": true
+    }
+  ]
+}

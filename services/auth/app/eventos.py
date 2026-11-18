@@ -37,13 +37,13 @@ class Publicador:
         """En Render gratuito los servicios duermen sin tráfico HTTP. Un GET a /health del servicio de
         notificaciones lo despierta y su consumidor procesa los eventos pendientes del stream."""
         url = getattr(config, "NOTIF_URL", "")
-        if not url:
+        if not url.startswith(("http://", "https://")):  # solo esquemas web (mitigación Bandit B310)
             return
 
         def ping():
             try:
-                urllib.request.urlopen(f"{url}/health", timeout=60).read()
-            except Exception:
+                urllib.request.urlopen(f"{url}/health", timeout=60).read()  # nosec B310 - esquema validado arriba
+            except Exception:  # nosec B110 - "despertar" es de mejor esfuerzo; un fallo no debe afectar al negocio
                 pass
         threading.Thread(target=ping, daemon=True).start()
 

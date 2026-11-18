@@ -4,6 +4,8 @@ __pycache__/
 .venv/
 *.db
 .pytest_cache/
-tests/carga/resultados/
+tests/carga/resultados/*_serie.json
 .local/
 .claude/
+docs/fuentes/deck/node_modules/
+docs/fuentes/docgen/_vista/

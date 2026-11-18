@@ -165,3 +165,10 @@ def test_espacio_recreativo_con_actividades(client):
     r = client.post("/espacios", json=nuevo, headers=token(99, "admin"))
     assert r.status_code == 201 and r.json()["actividades"] == "videojuegos, juegos de mesa"
     assert any(e["nombre"] == "Sala Gamer" for e in client.get("/espacios", params={"tipo": "recreacion"}).json())
+
+
+@pytest.mark.parametrize("carga", ["' OR 1=1--", "sala_estudio' UNION SELECT * FROM reservas--", "1; DROP TABLE espacios"])
+def test_inyeccion_sql_en_filtros_no_tiene_efecto(client, carga):
+    r = client.get("/espacios", params={"tipo": carga})
+    assert r.status_code == 200 and r.json() == []
+    assert len(client.get("/espacios").json()) >= 5  # la tabla sigue intacta
