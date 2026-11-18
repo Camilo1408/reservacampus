@@ -160,3 +160,21 @@ def test_actividad_en_descripcion_de_espacio_nuevo(monkeypatch):
     r = chat(monkeypatch, "necesito un lugar para practicar danza mañana", ACTUALES + [danza])
     assert r["respuesta"].startswith("✅ Sí, hay espacios para danza disponibles mañana")
     assert "Salón de Espejos" in r["respuesta"]
+
+
+@pytest.mark.parametrize("mensaje,pide", [
+    ("dame consejos para organizar un grupo de estudio eficiente", False),
+    ("cómo puedo concentrarme mejor al estudiar", False),
+    ("quiero jugar ajedrez mañana", True),
+    ("y para jugar video juegos", True),
+    ("¿hay cancha mañana?", True),
+    ("busco sala para estudiar", True),
+])
+def test_pide_espacio(mensaje, pide):
+    from app.actividades import pide_espacio
+    assert pide_espacio(mensaje) == pide
+
+
+def test_consejo_de_estudio_no_responde_disponibilidad(monkeypatch):
+    r = chat(monkeypatch, "dame consejos para organizar un grupo de estudio eficiente", ACTUALES)
+    assert r["intencion"] != "disponibilidad" and "✅" not in r["respuesta"]

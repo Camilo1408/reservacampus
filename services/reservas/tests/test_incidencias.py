@@ -125,6 +125,7 @@ def test_reportar_ocupante_anterior(client, reloj):
                                                      "hora_inicio": "10:00", "hora_fin": "11:00"})
     assert r.status_code == 403 and "sanción vigente" in r.json()["detail"]
     assert client.get("/reservas/mias", headers=h(B)).json()[0]["llegada_confirmada_en"] is not None
+    assert client.get("/reservas/mias", headers=h(B)).json()[0]["reportada"] is True
 
 
 def test_no_se_puede_reportar_sin_reserva_anterior(client, reloj):

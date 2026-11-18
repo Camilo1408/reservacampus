@@ -1,0 +1,379 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Notificaciones Service · ReservaCampus",
+    "description": "Consume eventos de reservas desde Redis Streams, genera notificaciones en la app y (opcional) envía correo por SMTP.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "sistema"
+        ],
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notificaciones": {
+      "get": {
+        "tags": [
+          "notificaciones"
+        ],
+        "summary": "Mis Notificaciones",
+        "operationId": "mis_notificaciones_notificaciones_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/NotificacionOut"
+                  },
+                  "type": "array",
+                  "title": "Response Mis Notificaciones Notificaciones Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/notificaciones/{nid}/leer": {
+      "post": {
+        "tags": [
+          "notificaciones"
+        ],
+        "summary": "Marcar Leida",
+        "operationId": "marcar_leida_notificaciones__nid__leer_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "nid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Nid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificacionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notificaciones/leer-todas": {
+      "post": {
+        "tags": [
+          "notificaciones"
+        ],
+        "summary": "Marcar Todas",
+        "operationId": "marcar_todas_notificaciones_leer_todas_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/alertas": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Enviar Alerta",
+        "description": "El administrador advierte a un usuario sobre su comportamiento (notificación en la app + correo).",
+        "operationId": "enviar_alerta_alertas_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertaIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificacionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/admin/usuarios/{uid}/notificaciones": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Notificaciones De Usuario",
+        "operationId": "notificaciones_de_usuario_admin_usuarios__uid__notificaciones_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Uid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificacionOut"
+                  },
+                  "title": "Response Notificaciones De Usuario Admin Usuarios  Uid  Notificaciones Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AlertaIn": {
+        "properties": {
+          "usuario_id": {
+            "type": "integer",
+            "title": "Usuario Id"
+          },
+          "usuario_email": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Usuario Email"
+          },
+          "usuario_nombre": {
+            "type": "string",
+            "maxLength": 80,
+            "title": "Usuario Nombre"
+          },
+          "asunto": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 3,
+            "title": "Asunto"
+          },
+          "mensaje": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 10,
+            "title": "Mensaje"
+          },
+          "enviar_correo": {
+            "type": "boolean",
+            "title": "Enviar Correo",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "usuario_id",
+          "usuario_email",
+          "usuario_nombre",
+          "asunto",
+          "mensaje"
+        ],
+        "title": "AlertaIn"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "NotificacionOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "mensaje": {
+            "type": "string",
+            "title": "Mensaje"
+          },
+          "leida": {
+            "type": "boolean",
+            "title": "Leida"
+          },
+          "correo_enviado": {
+            "type": "boolean",
+            "title": "Correo Enviado"
+          },
+          "creada_en": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Creada En"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tipo",
+          "titulo",
+          "mensaje",
+          "leida",
+          "correo_enviado",
+          "creada_en"
+        ],
+        "title": "NotificacionOut"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

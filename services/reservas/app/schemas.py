@@ -66,6 +66,7 @@ class ReservaOut(BaseModel):
     estado: str
     motivo_revocacion: str | None = None
     llegada_confirmada_en: datetime | None = None
+    reportada: bool = False  # el titular ya reportó que el espacio no fue entregado
     creada_en: datetime
 
 

@@ -111,7 +111,7 @@ async def cabeceras_seguridad(request: Request, call_next):
 # ---------------------------------------------------------------- utilidades
 def a_salida(r: Reserva) -> ReservaOut:
     return ReservaOut(espacio_nombre=r.espacio.nombre, **{k: getattr(r, k) for k in ReservaOut.model_fields
-                                                           if k != "espacio_nombre"})
+                                                           if k not in ("espacio_nombre", "reportada")})
 
 
 def horario_salida(h: HorarioClase) -> HorarioOut:
@@ -431,7 +431,11 @@ def mis_reservas(solo_activas: bool = False, u: UsuarioToken = Depends(usuario_a
     q = select(Reserva).where(Reserva.usuario_id == u.id)
     if solo_activas:
         q = q.where(Reserva.estado == "confirmada", Reserva.fecha >= reloj.ahora().date())
-    return [a_salida(r) for r in db.scalars(q.order_by(Reserva.fecha.desc(), Reserva.hora_inicio.desc())).all()]
+    reportadas = set(db.scalars(select(Reporte.reserva_id).where(Reporte.reportante_id == u.id)).all())
+    salida = [a_salida(r) for r in db.scalars(q.order_by(Reserva.fecha.desc(), Reserva.hora_inicio.desc())).all()]
+    for r in salida:
+        r.reportada = r.id in reportadas
+    return salida
 
 
 @app.get("/reservas", response_model=list[ReservaOut], tags=["admin"])

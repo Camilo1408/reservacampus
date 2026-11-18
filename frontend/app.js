@@ -520,7 +520,8 @@ function accionesReserva(r) {
   if (r.llegada_confirmada_en) b.push(`<span class="estado llegada">✓ Llegada confirmada</span>`);
   else if (ahora >= ini - 10 * MIN && ahora <= ini + 20 * MIN)
     b.push(`<button class="btn primario" data-llegada="${r.id}">Confirmar llegada</button>`);
-  if (ahora >= ini + 10 * MIN && ahora <= fin)
+  if (r.reportada) b.push(`<span class="estado revocada">⚑ Ocupación reportada</span>`);
+  else if (ahora >= ini + 10 * MIN && ahora <= fin)
     b.push(`<button class="btn secundario" data-reportar="${r.id}">Reportar espacio ocupado</button>`);
   if (ahora < ini) b.push(`<button class="btn peligro" data-cancelar="${r.id}">Cancelar</button>`);
   return b.join("");

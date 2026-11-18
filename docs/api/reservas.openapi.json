@@ -1,0 +1,2563 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Reservas Service · ReservaCampus",
+    "description": "Gestión de espacios, horarios de clase y reservas. Publica eventos `reserva.creada`, `reserva.cancelada` y `reserva.revocada` en Redis Streams para el servicio de notificaciones.",
+    "version": "1.1.0"
+  },
+  "paths": {
+    "/reservas/{reserva_id}/confirmar-llegada": {
+      "post": {
+        "tags": [
+          "llegada"
+        ],
+        "summary": "Confirmar Llegada",
+        "description": "Disponible desde 10 min antes hasta 20 min después del inicio.",
+        "operationId": "confirmar_llegada_reservas__reserva_id__confirmar_llegada_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "reserva_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Reserva Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reservas/{reserva_id}/reportar-ocupado": {
+      "post": {
+        "tags": [
+          "reportes"
+        ],
+        "summary": "Reportar Ocupado",
+        "description": "El titular reporta que la reserva inmediatamente anterior no entregó el espacio pasados 10 minutos.",
+        "operationId": "reportar_ocupado_reservas__reserva_id__reportar_ocupado_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "reserva_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Reserva Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReporteIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReporteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sanciones/mias": {
+      "get": {
+        "tags": [
+          "sanciones"
+        ],
+        "summary": "Mis Sanciones",
+        "operationId": "mis_sanciones_sanciones_mias_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SancionOut"
+                  },
+                  "type": "array",
+                  "title": "Response Mis Sanciones Sanciones Mias Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/admin/usuarios/resumen": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Resumen Usuarios",
+        "description": "Indicadores por usuario (para la tabla de gestión de usuarios).",
+        "operationId": "resumen_usuarios_admin_usuarios_resumen_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/admin/usuarios/{uid}/historial": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Historial Usuario",
+        "operationId": "historial_usuario_admin_usuarios__uid__historial_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Uid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/sanciones": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Listar Sanciones",
+        "operationId": "listar_sanciones_admin_sanciones_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "solo_activas",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Solo Activas"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SancionOut"
+                  },
+                  "title": "Response Listar Sanciones Admin Sanciones Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Sancion Manual",
+        "operationId": "sancion_manual_admin_sanciones_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SancionManualIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SancionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/sanciones/{sid}/levantar": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Levantar Sancion",
+        "description": "Termina la sanción antes de tiempo (sigue contando para la reincidencia).",
+        "operationId": "levantar_sancion_admin_sanciones__sid__levantar_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Sid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotaIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SancionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/reportes": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Listar Reportes",
+        "operationId": "listar_reportes_admin_reportes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ReporteOut"
+                  },
+                  "type": "array",
+                  "title": "Response Listar Reportes Admin Reportes Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/admin/reportes/{rid}/anular": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Anular Reporte",
+        "description": "Reporte inválido: se anula junto con su sanción, que deja de contar para la reincidencia.",
+        "operationId": "anular_reporte_admin_reportes__rid__anular_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "rid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Rid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotaIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReporteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tareas/ejecutar": {
+      "post": {
+        "tags": [
+          "sistema"
+        ],
+        "summary": "Ejecutar Tareas",
+        "description": "Ejecuta el programador una vez (para un cron externo). Requiere el encabezado X-Tareas-Token.",
+        "operationId": "ejecutar_tareas_tareas_ejecutar_post",
+        "parameters": [
+          {
+            "name": "x-tareas-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tareas-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "sistema"
+        ],
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/espacios": {
+      "get": {
+        "tags": [
+          "espacios"
+        ],
+        "summary": "Listar Espacios",
+        "operationId": "listar_espacios_espacios_get",
+        "parameters": [
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tipo"
+            }
+          },
+          {
+            "name": "capacidad_min",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Capacidad Min"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EspacioOut"
+                  },
+                  "title": "Response Listar Espacios Espacios Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Crear Espacio",
+        "operationId": "crear_espacio_espacios_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EspacioIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EspacioOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/espacios": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Listar Todos Los Espacios",
+        "description": "Incluye espacios deshabilitados.",
+        "operationId": "listar_todos_los_espacios_admin_espacios_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EspacioOut"
+                  },
+                  "type": "array",
+                  "title": "Response Listar Todos Los Espacios Admin Espacios Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/espacios/{espacio_id}": {
+      "get": {
+        "tags": [
+          "espacios"
+        ],
+        "summary": "Obtener Espacio",
+        "operationId": "obtener_espacio_espacios__espacio_id__get",
+        "parameters": [
+          {
+            "name": "espacio_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Espacio Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EspacioOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Actualizar Espacio",
+        "operationId": "actualizar_espacio_espacios__espacio_id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "espacio_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Espacio Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EspacioIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EspacioOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Eliminar Espacio",
+        "operationId": "eliminar_espacio_espacios__espacio_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "espacio_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Espacio Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/espacios/{espacio_id}/estado": {
+      "patch": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Cambiar Estado Espacio",
+        "description": "Habilita o deshabilita un espacio. Deshabilitado no aparece para reservar; sus reservas se conservan.",
+        "operationId": "cambiar_estado_espacio_espacios__espacio_id__estado_patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "espacio_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Espacio Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EstadoEspacioIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EspacioOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/espacios/{espacio_id}/ocupacion": {
+      "get": {
+        "tags": [
+          "espacios"
+        ],
+        "summary": "Ocupacion Espacio",
+        "operationId": "ocupacion_espacio_espacios__espacio_id__ocupacion_get",
+        "parameters": [
+          {
+            "name": "espacio_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Espacio Id"
+            }
+          },
+          {
+            "name": "fecha",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "Fecha"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Franja"
+                  },
+                  "title": "Response Ocupacion Espacio Espacios  Espacio Id  Ocupacion Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/disponibilidad": {
+      "get": {
+        "tags": [
+          "espacios"
+        ],
+        "summary": "Disponibilidad",
+        "description": "Estado de los espacios activos en una fecha (reservas + clases fijas). Con un rango horario, `libre`\nindica si el espacio está disponible en ese rango; si no, indica si no tiene ocupación ese día.",
+        "operationId": "disponibilidad_disponibilidad_get",
+        "parameters": [
+          {
+            "name": "fecha",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fecha"
+            }
+          },
+          {
+            "name": "hora_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Hora Inicio"
+            }
+          },
+          {
+            "name": "hora_fin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Hora Fin"
+            }
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tipo"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DisponibilidadOut"
+                  },
+                  "title": "Response Disponibilidad Disponibilidad Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/horarios": {
+      "get": {
+        "tags": [
+          "horarios"
+        ],
+        "summary": "Listar Horarios",
+        "operationId": "listar_horarios_horarios_get",
+        "parameters": [
+          {
+            "name": "espacio_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Espacio Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HorarioOut"
+                  },
+                  "title": "Response Listar Horarios Horarios Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "horarios"
+        ],
+        "summary": "Crear Horario",
+        "operationId": "crear_horario_horarios_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HorarioIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoCarga"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/horarios/{horario_id}": {
+      "put": {
+        "tags": [
+          "horarios"
+        ],
+        "summary": "Actualizar Horario",
+        "operationId": "actualizar_horario_horarios__horario_id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "horario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Horario Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HorarioIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoCarga"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "horarios"
+        ],
+        "summary": "Eliminar Horario",
+        "operationId": "eliminar_horario_horarios__horario_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "horario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Horario Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/horarios/carga": {
+      "post": {
+        "tags": [
+          "horarios"
+        ],
+        "summary": "Cargar Horarios",
+        "description": "Carga masiva de horarios de clase (p. ej. desde un CSV). Si `reemplazar` es true, borra antes\nlos horarios de los espacios incluidos en el archivo.",
+        "operationId": "cargar_horarios_horarios_carga_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CargaHorariosIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoCarga"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/reservas": {
+      "post": {
+        "tags": [
+          "reservas"
+        ],
+        "summary": "Crear Reserva",
+        "operationId": "crear_reserva_reservas_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReservaIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservaOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Todas Las Reservas",
+        "operationId": "todas_las_reservas_reservas_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "fecha",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fecha"
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Estado"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReservaOut"
+                  },
+                  "title": "Response Todas Las Reservas Reservas Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reservas/mias": {
+      "get": {
+        "tags": [
+          "reservas"
+        ],
+        "summary": "Mis Reservas",
+        "operationId": "mis_reservas_reservas_mias_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "solo_activas",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Solo Activas"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReservaOut"
+                  },
+                  "title": "Response Mis Reservas Reservas Mias Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reservas/{reserva_id}/cancelar": {
+      "post": {
+        "tags": [
+          "reservas"
+        ],
+        "summary": "Cancelar Reserva",
+        "operationId": "cancelar_reserva_reservas__reserva_id__cancelar_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "reserva_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Reserva Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservaOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reservas/{reserva_id}/revocar": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Revocar Reserva",
+        "description": "El administrador anula una reserva con justificación. Se notifica al usuario (app + correo).",
+        "operationId": "revocar_reserva_reservas__reserva_id__revocar_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "reserva_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Reserva Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevocarIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservaOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/estadisticas": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Estadisticas",
+        "operationId": "estadisticas_estadisticas_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CargaHorariosIn": {
+        "properties": {
+          "filas": {
+            "items": {
+              "$ref": "#/components/schemas/FilaCargaHorario"
+            },
+            "type": "array",
+            "maxItems": 1000,
+            "minItems": 1,
+            "title": "Filas"
+          },
+          "reemplazar": {
+            "type": "boolean",
+            "title": "Reemplazar",
+            "default": false
+          },
+          "vigente_desde": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vigente Desde"
+          },
+          "vigente_hasta": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vigente Hasta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "filas"
+        ],
+        "title": "CargaHorariosIn"
+      },
+      "ConflictoOut": {
+        "properties": {
+          "reserva_id": {
+            "type": "integer",
+            "title": "Reserva Id"
+          },
+          "espacio": {
+            "type": "string",
+            "title": "Espacio"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date",
+            "title": "Fecha"
+          },
+          "hora_inicio": {
+            "type": "string",
+            "format": "time",
+            "title": "Hora Inicio"
+          },
+          "hora_fin": {
+            "type": "string",
+            "format": "time",
+            "title": "Hora Fin"
+          },
+          "usuario_nombre": {
+            "type": "string",
+            "title": "Usuario Nombre"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reserva_id",
+          "espacio",
+          "fecha",
+          "hora_inicio",
+          "hora_fin",
+          "usuario_nombre"
+        ],
+        "title": "ConflictoOut"
+      },
+      "DisponibilidadOut": {
+        "properties": {
+          "espacio": {
+            "$ref": "#/components/schemas/EspacioOut"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date",
+            "title": "Fecha"
+          },
+          "libre": {
+            "type": "boolean",
+            "title": "Libre"
+          },
+          "ocupado": {
+            "items": {
+              "$ref": "#/components/schemas/Franja"
+            },
+            "type": "array",
+            "title": "Ocupado"
+          }
+        },
+        "type": "object",
+        "required": [
+          "espacio",
+          "fecha",
+          "libre",
+          "ocupado"
+        ],
+        "title": "DisponibilidadOut"
+      },
+      "EspacioIn": {
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 2,
+            "title": "Nombre"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "sala_estudio",
+              "laboratorio",
+              "auditorio",
+              "cancha",
+              "recreacion"
+            ],
+            "title": "Tipo"
+          },
+          "capacidad": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 1.0,
+            "title": "Capacidad"
+          },
+          "ubicacion": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 2,
+            "title": "Ubicacion"
+          },
+          "descripcion": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Descripcion",
+            "default": ""
+          },
+          "actividades": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Actividades",
+            "default": ""
+          },
+          "hora_apertura": {
+            "type": "string",
+            "format": "time",
+            "title": "Hora Apertura",
+            "default": "07:00:00"
+          },
+          "hora_cierre": {
+            "type": "string",
+            "format": "time",
+            "title": "Hora Cierre",
+            "default": "21:00:00"
+          },
+          "activo": {
+            "type": "boolean",
+            "title": "Activo",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "nombre",
+          "tipo",
+          "capacidad",
+          "ubicacion"
+        ],
+        "title": "EspacioIn"
+      },
+      "EspacioOut": {
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 2,
+            "title": "Nombre"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "sala_estudio",
+              "laboratorio",
+              "auditorio",
+              "cancha",
+              "recreacion"
+            ],
+            "title": "Tipo"
+          },
+          "capacidad": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 1.0,
+            "title": "Capacidad"
+          },
+          "ubicacion": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 2,
+            "title": "Ubicacion"
+          },
+          "descripcion": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Descripcion",
+            "default": ""
+          },
+          "actividades": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Actividades",
+            "default": ""
+          },
+          "hora_apertura": {
+            "type": "string",
+            "format": "time",
+            "title": "Hora Apertura",
+            "default": "07:00:00"
+          },
+          "hora_cierre": {
+            "type": "string",
+            "format": "time",
+            "title": "Hora Cierre",
+            "default": "21:00:00"
+          },
+          "activo": {
+            "type": "boolean",
+            "title": "Activo",
+            "default": true
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nombre",
+          "tipo",
+          "capacidad",
+          "ubicacion",
+          "id"
+        ],
+        "title": "EspacioOut"
+      },
+      "EstadoEspacioIn": {
+        "properties": {
+          "activo": {
+            "type": "boolean",
+            "title": "Activo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "activo"
+        ],
+        "title": "EstadoEspacioIn"
+      },
+      "FilaCargaHorario": {
+        "properties": {
+          "espacio": {
+            "type": "string",
+            "title": "Espacio"
+          },
+          "dia": {
+            "type": "string",
+            "title": "Dia"
+          },
+          "hora_inicio": {
+            "type": "string",
+            "title": "Hora Inicio"
+          },
+          "hora_fin": {
+            "type": "string",
+            "title": "Hora Fin"
+          },
+          "materia": {
+            "type": "string",
+            "title": "Materia"
+          },
+          "docente": {
+            "type": "string",
+            "title": "Docente",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "espacio",
+          "dia",
+          "hora_inicio",
+          "hora_fin",
+          "materia"
+        ],
+        "title": "FilaCargaHorario",
+        "description": "Fila del CSV: el espacio se identifica por nombre o id y el día por nombre o número."
+      },
+      "Franja": {
+        "properties": {
+          "hora_inicio": {
+            "type": "string",
+            "format": "time",
+            "title": "Hora Inicio"
+          },
+          "hora_fin": {
+            "type": "string",
+            "format": "time",
+            "title": "Hora Fin"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "reserva",
+              "clase"
+            ],
+            "title": "Tipo",
+            "default": "reserva"
+          },
+          "etiqueta": {
+            "type": "string",
+            "title": "Etiqueta",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "hora_inicio",
+          "hora_fin"
+        ],
+        "title": "Franja"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HorarioIn": {
+        "properties": {
+          "espacio_id": {
+            "type": "integer",
+            "title": "Espacio Id"
+          },
+          "dia_semana": {
+            "type": "integer",
+            "maximum": 6.0,
+            "minimum": 0.0,
+            "title": "Dia Semana"
+          },
+          "hora_inicio": {
+            "type": "string",
+            "format": "time",
+            "title": "Hora Inicio"
+          },
+          "hora_fin": {
+            "type": "string",
+            "format": "time",
+            "title": "Hora Fin"
+          },
+          "materia": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 2,
+            "title": "Materia"
+          },
+          "docente": {
+            "type": "string",
+            "maxLength": 80,
+            "title": "Docente",
+            "default": ""
+          },
+          "vigente_desde": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vigente Desde"
+          },
+          "vigente_hasta": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vigente Hasta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "espacio_id",
+          "dia_semana",
+          "hora_inicio",
+          "hora_fin",
+          "materia"
+        ],
+        "title": "HorarioIn"
+      },
+      "HorarioOut": {
+        "properties": {
+          "espacio_id": {
+            "type": "integer",
+            "title": "Espacio Id"
+          },
+          "dia_semana": {
+            "type": "integer",
+            "maximum": 6.0,
+            "minimum": 0.0,
+            "title": "Dia Semana"
+          },
+          "hora_inicio": {
+            "type": "string",
+            "format": "time",
+            "title": "Hora Inicio"
+          },
+          "hora_fin": {
+            "type": "string",
+            "format": "time",
+            "title": "Hora Fin"
+          },
+          "materia": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 2,
+            "title": "Materia"
+          },
+          "docente": {
+            "type": "string",
+            "maxLength": 80,
+            "title": "Docente",
+            "default": ""
+          },
+          "vigente_desde": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vigente Desde"
+          },
+          "vigente_hasta": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vigente Hasta"
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "espacio_nombre": {
+            "type": "string",
+            "title": "Espacio Nombre",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "espacio_id",
+          "dia_semana",
+          "hora_inicio",
+          "hora_fin",
+          "materia",
+          "id"
+        ],
+        "title": "HorarioOut"
+      },
+      "NotaIn": {
+        "properties": {
+          "nota": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 5,
+            "title": "Nota"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nota"
+        ],
+        "title": "NotaIn"
+      },
+      "ReporteIn": {
+        "properties": {
+          "comentario": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Comentario",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "ReporteIn"
+      },
+      "ReporteOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "reserva_id": {
+            "type": "integer",
+            "title": "Reserva Id"
+          },
+          "reportante_id": {
+            "type": "integer",
+            "title": "Reportante Id"
+          },
+          "reportante_nombre": {
+            "type": "string",
+            "title": "Reportante Nombre"
+          },
+          "reserva_reportada_id": {
+            "type": "integer",
+            "title": "Reserva Reportada Id"
+          },
+          "reportado_id": {
+            "type": "integer",
+            "title": "Reportado Id"
+          },
+          "reportado_nombre": {
+            "type": "string",
+            "title": "Reportado Nombre"
+          },
+          "reportado_email": {
+            "type": "string",
+            "title": "Reportado Email"
+          },
+          "espacio": {
+            "type": "string",
+            "title": "Espacio"
+          },
+          "comentario": {
+            "type": "string",
+            "title": "Comentario"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "sancion_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sancion Id"
+          },
+          "creado_en": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Creado En"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "reserva_id",
+          "reportante_id",
+          "reportante_nombre",
+          "reserva_reportada_id",
+          "reportado_id",
+          "reportado_nombre",
+          "reportado_email",
+          "espacio",
+          "comentario",
+          "estado",
+          "sancion_id",
+          "creado_en"
+        ],
+        "title": "ReporteOut"
+      },
+      "ReservaIn": {
+        "properties": {
+          "espacio_id": {
+            "type": "integer",
+            "title": "Espacio Id"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date",
+            "title": "Fecha"
+          },
+          "hora_inicio": {
+            "type": "string",
+            "format": "time",
+            "title": "Hora Inicio"
+          },
+          "hora_fin": {
+            "type": "string",
+            "format": "time",
+            "title": "Hora Fin"
+          },
+          "asistentes": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 1.0,
+            "title": "Asistentes",
+            "default": 1
+          },
+          "motivo": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Motivo",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "espacio_id",
+          "fecha",
+          "hora_inicio",
+          "hora_fin"
+        ],
+        "title": "ReservaIn"
+      },
+      "ReservaOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "espacio_id": {
+            "type": "integer",
+            "title": "Espacio Id"
+          },
+          "espacio_nombre": {
+            "type": "string",
+            "title": "Espacio Nombre"
+          },
+          "usuario_id": {
+            "type": "integer",
+            "title": "Usuario Id"
+          },
+          "usuario_nombre": {
+            "type": "string",
+            "title": "Usuario Nombre"
+          },
+          "usuario_email": {
+            "type": "string",
+            "title": "Usuario Email"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date",
+            "title": "Fecha"
+          },
+          "hora_inicio": {
+            "type": "string",
+            "format": "time",
+            "title": "Hora Inicio"
+          },
+          "hora_fin": {
+            "type": "string",
+            "format": "time",
+            "title": "Hora Fin"
+          },
+          "asistentes": {
+            "type": "integer",
+            "title": "Asistentes"
+          },
+          "motivo": {
+            "type": "string",
+            "title": "Motivo"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "motivo_revocacion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo Revocacion"
+          },
+          "llegada_confirmada_en": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Llegada Confirmada En"
+          },
+          "creada_en": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Creada En"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "espacio_id",
+          "espacio_nombre",
+          "usuario_id",
+          "usuario_nombre",
+          "usuario_email",
+          "fecha",
+          "hora_inicio",
+          "hora_fin",
+          "asistentes",
+          "motivo",
+          "estado",
+          "creada_en"
+        ],
+        "title": "ReservaOut"
+      },
+      "ResultadoCarga": {
+        "properties": {
+          "creados": {
+            "type": "integer",
+            "title": "Creados"
+          },
+          "errores": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Errores"
+          },
+          "conflictos": {
+            "items": {
+              "$ref": "#/components/schemas/ConflictoOut"
+            },
+            "type": "array",
+            "title": "Conflictos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "creados",
+          "errores",
+          "conflictos"
+        ],
+        "title": "ResultadoCarga"
+      },
+      "RevocarIn": {
+        "properties": {
+          "justificacion": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 10,
+            "title": "Justificacion"
+          }
+        },
+        "type": "object",
+        "required": [
+          "justificacion"
+        ],
+        "title": "RevocarIn"
+      },
+      "SancionManualIn": {
+        "properties": {
+          "usuario_id": {
+            "type": "integer",
+            "title": "Usuario Id"
+          },
+          "usuario_email": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Usuario Email"
+          },
+          "usuario_nombre": {
+            "type": "string",
+            "maxLength": 80,
+            "title": "Usuario Nombre"
+          },
+          "motivo": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 10,
+            "title": "Motivo"
+          },
+          "dias": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 365.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dias"
+          }
+        },
+        "type": "object",
+        "required": [
+          "usuario_id",
+          "usuario_email",
+          "usuario_nombre",
+          "motivo"
+        ],
+        "title": "SancionManualIn"
+      },
+      "SancionOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "usuario_id": {
+            "type": "integer",
+            "title": "Usuario Id"
+          },
+          "usuario_nombre": {
+            "type": "string",
+            "title": "Usuario Nombre"
+          },
+          "usuario_email": {
+            "type": "string",
+            "title": "Usuario Email"
+          },
+          "nivel": {
+            "type": "integer",
+            "title": "Nivel"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo"
+          },
+          "motivo": {
+            "type": "string",
+            "title": "Motivo"
+          },
+          "reserva_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reserva Id"
+          },
+          "desde": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Desde"
+          },
+          "hasta": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hasta"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "nota_admin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nota Admin"
+          },
+          "creada_por": {
+            "type": "string",
+            "title": "Creada Por"
+          },
+          "activa": {
+            "type": "boolean",
+            "title": "Activa",
+            "default": false
+          },
+          "descripcion": {
+            "type": "string",
+            "title": "Descripcion",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "usuario_id",
+          "usuario_nombre",
+          "usuario_email",
+          "nivel",
+          "tipo",
+          "motivo",
+          "reserva_id",
+          "desde",
+          "hasta",
+          "estado",
+          "nota_admin",
+          "creada_por"
+        ],
+        "title": "SancionOut"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

@@ -122,6 +122,17 @@ def espacios_que_mencionan(texto: str, espacios: list[dict]) -> list[dict]:
     return [e for e in espacios if texto in texto_espacio(e)]
 
 
+_PIDE_ESPACIO = re.compile(
+    r"\b(hay|habra|existe|libre|libres|disponib\w*|desocupad\w*|espacio|espacios|lugar|sala|salas|cancha|canchas|"
+    r"laboratorio|auditorio|donde|necesito|necesitamos|busco|buscamos|quiero|queremos|reservar|reserva|"
+    r"ocupad\w*|para jugar|para hacer|para practicar|tienen|ofrecen)\b")
+
+
+def pide_espacio(mensaje: str) -> bool:
+    """¿El mensaje busca un lugar/disponibilidad (y no solo menciona una actividad)?"""
+    return bool(_PIDE_ESPACIO.search(normalizar(mensaje)))
+
+
 def menciona_jugar(mensaje: str) -> bool:
     return bool(re.search(r"\bjug(ar|amos|ando|amos a)\b", normalizar(mensaje)))
 

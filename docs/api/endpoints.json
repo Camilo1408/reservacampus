@@ -1,0 +1,374 @@
+{
+  "auth": [
+    {
+      "metodo": "GET",
+      "ruta": "/health",
+      "resumen": "Health",
+      "descripcion": "",
+      "etiqueta": "sistema"
+    },
+    {
+      "metodo": "POST",
+      "ruta": "/registro",
+      "resumen": "Registro",
+      "descripcion": "",
+      "etiqueta": "auth"
+    },
+    {
+      "metodo": "POST",
+      "ruta": "/login",
+      "resumen": "Login",
+      "descripcion": "",
+      "etiqueta": "auth"
+    },
+    {
+      "metodo": "POST",
+      "ruta": "/recuperar",
+      "resumen": "Recuperar Password",
+      "descripcion": "Envía un enlace para restablecer la contraseña. Responde igual exista o no el correo.",
+      "etiqueta": "auth"
+    },
+    {
+      "metodo": "POST",
+      "ruta": "/restablecer",
+      "resumen": "Restablecer Password",
+      "descripcion": "",
+      "etiqueta": "auth"
+    },
+    {
+      "metodo": "GET",
+      "ruta": "/me",
+      "resumen": "Me",
+      "descripcion": "",
+      "etiqueta": "auth"
+    },
+    {
+      "metodo": "POST",
+      "ruta": "/me/password",
+      "resumen": "Cambiar Password",
+      "descripcion": "",
+      "etiqueta": "auth"
+    },
+    {
+      "metodo": "GET",
+      "ruta": "/usuarios",
+      "resumen": "Listar Usuarios",
+      "descripcion": "",
+      "etiqueta": "admin"
+    },
+    {
+      "metodo": "GET",
+      "ruta": "/usuarios/{uid}",
+      "resumen": "Obtener Usuario",
+      "descripcion": "",
+      "etiqueta": "admin"
+    },
+    {
+      "metodo": "PATCH",
+      "ruta": "/usuarios/{uid}/estado",
+      "resumen": "Cambiar Estado",
+      "descripcion": "activo: normal · suspendido: puede entrar pero no reservar · bloqueado: no puede iniciar sesión.",
+      "etiqueta": "admin"
+    },
+    {
+      "metodo": "PATCH",
+      "ruta": "/usuarios/{uid}/rol",
+      "resumen": "Cambiar Rol",
+      "descripcion": "",
+      "etiqueta": "admin"
+    },
+    {
+      "metodo": "POST",
+      "ruta": "/usuarios/{uid}/restablecer",
+      "resumen": "Admin Restablecer",
+      "descripcion": "Genera un enlace de recuperación y lo envía al correo del usuario. El enlace también se devuelve",
+      "etiqueta": "admin"
+    }
+  ],
+  "reservas": [
+    {
+      "metodo": "POST",
+      "ruta": "/reservas/{reserva_id}/confirmar-llegada",
+      "resumen": "Confirmar Llegada",
+      "descripcion": "Disponible desde 10 min antes hasta 20 min después del inicio.",
+      "etiqueta": "llegada"
+    },
+    {
+      "metodo": "POST",
+      "ruta": "/reservas/{reserva_id}/reportar-ocupado",
+      "resumen": "Reportar Ocupado",
+      "descripcion": "El titular reporta que la reserva inmediatamente anterior no entregó el espacio pasados 10 minutos.",
+      "etiqueta": "reportes"
+    },
+    {
+      "metodo": "GET",
+      "ruta": "/sanciones/mias",
+      "resumen": "Mis Sanciones",
+      "descripcion": "",
+      "etiqueta": "sanciones"
+    },
+    {
+      "metodo": "GET",
+      "ruta": "/admin/usuarios/resumen",
+      "resumen": "Resumen Usuarios",
+      "descripcion": "Indicadores por usuario (para la tabla de gestión de usuarios).",
+      "etiqueta": "admin"
+    },
+    {
+      "metodo": "GET",
+      "ruta": "/admin/usuarios/{uid}/historial",
+      "resumen": "Historial Usuario",
+      "descripcion": "",
+      "etiqueta": "admin"
+    },
+    {
+      "metodo": "GET",
+      "ruta": "/admin/sanciones",
+      "resumen": "Listar Sanciones",
+      "descripcion": "",
+      "etiqueta": "admin"
+    },
+    {
+      "metodo": "POST",
+      "ruta": "/admin/sanciones",
+      "resumen": "Sancion Manual",
+      "descripcion": "",
+      "etiqueta": "admin"
+    },
+    {
+      "metodo": "POST",
+      "ruta": "/admin/sanciones/{sid}/levantar",
+      "resumen": "Levantar Sancion",
+      "descripcion": "Termina la sanción antes de tiempo (sigue contando para la reincidencia).",
+      "etiqueta": "admin"
+    },
+    {
+      "metodo": "GET",
+      "ruta": "/admin/reportes",
+      "resumen": "Listar Reportes",
+      "descripcion": "",
+      "etiqueta": "admin"
+    },
+    {
+      "metodo": "POST",
+      "ruta": "/admin/reportes/{rid}/anular",
+      "resumen": "Anular Reporte",
+      "descripcion": "Reporte inválido: se anula junto con su sanción, que deja de contar para la reincidencia.",
+      "etiqueta": "admin"
+    },
+    {
+      "metodo": "POST",
+      "ruta": "/tareas/ejecutar",
+      "resumen": "Ejecutar Tareas",
+      "descripcion": "Ejecuta el programador una vez (para un cron externo). Requiere el encabezado X-Tareas-Token.",
+      "etiqueta": "sistema"
+    },
+    {
+      "metodo": "GET",
+      "ruta": "/health",
+      "resumen": "Health",
+      "descripcion": "",
+      "etiqueta": "sistema"
+    },
+    {
+      "metodo": "GET",
+      "ruta": "/espacios",
+      "resumen": "Listar Espacios",
+      "descripcion": "",
+      "etiqueta": "espacios"
+    },
+    {
+      "metodo": "POST",
+      "ruta": "/espacios",
+      "resumen": "Crear Espacio",
+      "descripcion": "",
+      "etiqueta": "admin"
+    },
+    {
+      "metodo": "GET",
+      "ruta": "/admin/espacios",
+      "resumen": "Listar Todos Los Espacios",
+      "descripcion": "Incluye espacios deshabilitados.",
+      "etiqueta": "admin"
+    },
+    {
+      "metodo": "GET",
+      "ruta": "/espacios/{espacio_id}",
+      "resumen": "Obtener Espacio",
+      "descripcion": "",
+      "etiqueta": "espacios"
+    },
+    {
+      "metodo": "PUT",
+      "ruta": "/espacios/{espacio_id}",
+      "resumen": "Actualizar Espacio",
+      "descripcion": "",
+      "etiqueta": "admin"
+    },
+    {
+      "metodo": "DELETE",
+      "ruta": "/espacios/{espacio_id}",
+      "resumen": "Eliminar Espacio",
+      "descripcion": "",
+      "etiqueta": "admin"
+    },
+    {
+      "metodo": "PATCH",
+      "ruta": "/espacios/{espacio_id}/estado",
+      "resumen": "Cambiar Estado Espacio",
+      "descripcion": "Habilita o deshabilita un espacio. Deshabilitado no aparece para reservar; sus reservas se conservan.",
+      "etiqueta": "admin"
+    },
+    {
+      "metodo": "GET",
+      "ruta": "/espacios/{espacio_id}/ocupacion",
+      "resumen": "Ocupacion Espacio",
+      "descripcion": "",
+      "etiqueta": "espacios"
+    },
+    {
+      "metodo": "GET",
+      "ruta": "/disponibilidad",
+      "resumen": "Disponibilidad",
+      "descripcion": "Estado de los espacios activos en una fecha (reservas + clases fijas). Con un rango horario, `libre`",
+      "etiqueta": "espacios"
+    },
+    {
+      "metodo": "GET",
+      "ruta": "/horarios",
+      "resumen": "Listar Horarios",
+      "descripcion": "",
+      "etiqueta": "horarios"
+    },
+    {
+      "metodo": "POST",
+      "ruta": "/horarios",
+      "resumen": "Crear Horario",
+      "descripcion": "",
+      "etiqueta": "horarios"
+    },
+    {
+      "metodo": "PUT",
+      "ruta": "/horarios/{horario_id}",
+      "resumen": "Actualizar Horario",
+      "descripcion": "",
+      "etiqueta": "horarios"
+    },
+    {
+      "metodo": "DELETE",
+      "ruta": "/horarios/{horario_id}",
+      "resumen": "Eliminar Horario",
+      "descripcion": "",
+      "etiqueta": "horarios"
+    },
+    {
+      "metodo": "POST",
+      "ruta": "/horarios/carga",
+      "resumen": "Cargar Horarios",
+      "descripcion": "Carga masiva de horarios de clase (p. ej. desde un CSV). Si `reemplazar` es true, borra antes",
+      "etiqueta": "horarios"
+    },
+    {
+      "metodo": "POST",
+      "ruta": "/reservas",
+      "resumen": "Crear Reserva",
+      "descripcion": "",
+      "etiqueta": "reservas"
+    },
+    {
+      "metodo": "GET",
+      "ruta": "/reservas",
+      "resumen": "Todas Las Reservas",
+      "descripcion": "",
+      "etiqueta": "admin"
+    },
+    {
+      "metodo": "GET",
+      "ruta": "/reservas/mias",
+      "resumen": "Mis Reservas",
+      "descripcion": "",
+      "etiqueta": "reservas"
+    },
+    {
+      "metodo": "POST",
+      "ruta": "/reservas/{reserva_id}/cancelar",
+      "resumen": "Cancelar Reserva",
+      "descripcion": "",
+      "etiqueta": "reservas"
+    },
+    {
+      "metodo": "POST",
+      "ruta": "/reservas/{reserva_id}/revocar",
+      "resumen": "Revocar Reserva",
+      "descripcion": "El administrador anula una reserva con justificación. Se notifica al usuario (app + correo).",
+      "etiqueta": "admin"
+    },
+    {
+      "metodo": "GET",
+      "ruta": "/estadisticas",
+      "resumen": "Estadisticas",
+      "descripcion": "",
+      "etiqueta": "admin"
+    }
+  ],
+  "notificaciones": [
+    {
+      "metodo": "GET",
+      "ruta": "/health",
+      "resumen": "Health",
+      "descripcion": "",
+      "etiqueta": "sistema"
+    },
+    {
+      "metodo": "GET",
+      "ruta": "/notificaciones",
+      "resumen": "Mis Notificaciones",
+      "descripcion": "",
+      "etiqueta": "notificaciones"
+    },
+    {
+      "metodo": "POST",
+      "ruta": "/notificaciones/{nid}/leer",
+      "resumen": "Marcar Leida",
+      "descripcion": "",
+      "etiqueta": "notificaciones"
+    },
+    {
+      "metodo": "POST",
+      "ruta": "/notificaciones/leer-todas",
+      "resumen": "Marcar Todas",
+      "descripcion": "",
+      "etiqueta": "notificaciones"
+    },
+    {
+      "metodo": "POST",
+      "ruta": "/alertas",
+      "resumen": "Enviar Alerta",
+      "descripcion": "El administrador advierte a un usuario sobre su comportamiento (notificación en la app + correo).",
+      "etiqueta": "admin"
+    },
+    {
+      "metodo": "GET",
+      "ruta": "/admin/usuarios/{uid}/notificaciones",
+      "resumen": "Notificaciones De Usuario",
+      "descripcion": "",
+      "etiqueta": "admin"
+    }
+  ],
+  "chatbot": [
+    {
+      "metodo": "GET",
+      "ruta": "/health",
+      "resumen": "Health",
+      "descripcion": "",
+      "etiqueta": "sistema"
+    },
+    {
+      "metodo": "POST",
+      "ruta": "/chat",
+      "resumen": "Chat",
+      "descripcion": "",
+      "etiqueta": "chat"
+    }
+  ]
+}

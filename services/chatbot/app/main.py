@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from . import config, ia
-from .actividades import TIPOS as TIPOS_ESPACIO, actividad_libre, detectar_actividad, espacios_que_mencionan, etiqueta_mencionada, menciona_jugar, resumen_oferta, sirve_para
+from .actividades import TIPOS as TIPOS_ESPACIO, actividad_libre, pide_espacio, detectar_actividad, espacios_que_mencionan, etiqueta_mencionada, menciona_jugar, resumen_oferta, sirve_para
 from .reglas import detectar, extraer_fecha, extraer_hora, extraer_personas, franjas_libres
 
 app = FastAPI(
@@ -194,8 +194,10 @@ async def chat(datos: ChatIn, request: Request, authorization: str | None = Head
     limitar(request.client.host if request.client else "desconocido")
     # Si menciona una actividad (conocida o definida por el admin en un espacio), se responde con los
     # espacios reales que sirven para ella, salvo que la intención sea otra acción (cancelar, mis reservas...)
-    mencion_actividad = (detectar_actividad(datos.mensaje) or menciona_jugar(datos.mensaje)
-                         or actividad_libre(datos.mensaje))
+    # Solo se busca disponibilidad si el mensaje PIDE un espacio ("¿hay...?", "necesito...", "para jugar...").
+    # "Dame consejos para organizar un grupo de estudio" menciona una actividad pero no pide espacio -> IA.
+    mencion_actividad = pide_espacio(datos.mensaje) and (
+        detectar_actividad(datos.mensaje) or menciona_jugar(datos.mensaje) or actividad_libre(datos.mensaje))
     intencion = detectar(datos.mensaje)
     if not mencion_actividad and (not intencion or intencion.nombre in ("disponibilidad", "tipos")):
         try:
