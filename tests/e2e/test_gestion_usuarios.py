@@ -5,7 +5,7 @@ from datetime import date, timedelta
 
 from playwright.sync_api import expect
 
-from conftest import ADMIN, iniciar_sesion, ir_admin, registrar
+from conftest import ADMIN, abrir, iniciar_sesion, ir_admin, registrar
 
 
 def unico():
@@ -15,8 +15,7 @@ def unico():
 def nueva_sesion(browser, base_url):
     ctx = browser.new_context()
     p = ctx.new_page()
-    p.set_default_timeout(10000)
-    p.goto(base_url)
+    abrir(p, base_url)
     return ctx, p
 
 
@@ -92,7 +91,7 @@ def test_admin_restablece_contrasena_con_enlace(pagina, browser, base_url):
     enlace = re.search(r"https?://\S+\?reset=\S+", texto).group(0)
     ctx.close()
 
-    pagina.goto(enlace)
+    abrir(pagina, enlace)
     expect(pagina.locator("#modal-restablecer")).to_be_visible()
     pagina.fill("#form-restablecer [name=password]", "NuevaClave123")
     pagina.fill("#form-restablecer [name=password2]", "OtraCosa123")

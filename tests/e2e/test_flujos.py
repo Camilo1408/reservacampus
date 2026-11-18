@@ -4,7 +4,7 @@ from datetime import date, timedelta
 
 from playwright.sync_api import expect
 
-from conftest import ADMIN, elegir, iniciar_sesion, ir_admin, registrar
+from conftest import ADMIN, abrir, elegir, iniciar_sesion, ir_admin, registrar
 
 
 def unico(prefijo="u"):
@@ -173,7 +173,7 @@ def test_admin_revoca_reserva_y_estudiante_ve_justificacion(pagina, browser, bas
     # 2) El administrador revoca con justificación (otra sesión de navegador)
     ctx = browser.new_context()
     adm = ctx.new_page()
-    adm.goto(base_url)
+    abrir(adm, base_url)
     iniciar_sesion(adm, *ADMIN)
     ir_admin(adm, "reservas")
     fila = adm.locator("#tabla-reservas tr", has_text=email)

@@ -74,9 +74,17 @@ def base_url():
 
 @pytest.fixture()
 def pagina(page, base_url):
-    page.set_default_timeout(10000)
-    page.goto(base_url)
+    abrir(page, base_url)
     return page
+
+
+def abrir(page, url):
+    """Navega sin depender de recursos externos: las fuentes de Google vuelven lentas e inestables las pruebas."""
+    page.set_default_timeout(10000)
+    page.route("**/fonts.googleapis.com/**", lambda r: r.abort())
+    page.route("**/fonts.gstatic.com/**", lambda r: r.abort())
+    page.goto(url, wait_until="domcontentloaded")
+    page.wait_for_selector("#form-login", state="attached")
 
 
 def iniciar_sesion(page, email, password):
