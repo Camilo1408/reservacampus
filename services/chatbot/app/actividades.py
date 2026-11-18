@@ -98,6 +98,30 @@ def sirve_para(espacio: dict, actividad: Actividad | None, tag: str | None) -> b
     return False
 
 
+_NO_ACTIVIDAD = {"hoy", "manana", "pasado", "el", "la", "los", "las", "mi", "mis", "un", "una", "que", "cuando",
+                 "reservar", "reserva", "personas", "nosotros", "todos", "grupo", "esta", "este", "semana",
+                 "lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo", "jugar", "ahora"}
+
+
+def actividad_libre(mensaje: str) -> str | None:
+    """Actividad no catalogada escrita como 'para (hacer|practicar|jugar) X' (p. ej. 'para hacer yoga')."""
+    m = re.search(r"\bpara (?:hacer |practicar |jugar |tener |realizar )?(?:un |una |el |la )?([a-zn][a-zn ]{2,30})",
+                  normalizar(mensaje))
+    if not m:
+        return None
+    palabras = []
+    for p in m.group(1).split():
+        if p in _NO_ACTIVIDAD or p.isdigit() or p in ("a", "de", "con", "en", "y", "o"):
+            break
+        palabras.append(p)
+    candidato = " ".join(palabras[:3])
+    return candidato if len(candidato) >= 3 and candidato not in _NO_ACTIVIDAD else None
+
+
+def espacios_que_mencionan(texto: str, espacios: list[dict]) -> list[dict]:
+    return [e for e in espacios if texto in texto_espacio(e)]
+
+
 def menciona_jugar(mensaje: str) -> bool:
     return bool(re.search(r"\bjug(ar|amos|ando|amos a)\b", normalizar(mensaje)))
 

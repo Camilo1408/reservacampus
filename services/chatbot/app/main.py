@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from . import config, ia
-from .actividades import TIPOS as TIPOS_ESPACIO, detectar_actividad, etiqueta_mencionada, menciona_jugar, resumen_oferta, sirve_para
+from .actividades import TIPOS as TIPOS_ESPACIO, actividad_libre, detectar_actividad, espacios_que_mencionan, etiqueta_mencionada, menciona_jugar, resumen_oferta, sirve_para
 from .reglas import detectar, extraer_fecha, extraer_hora, extraer_personas, franjas_libres
 
 app = FastAPI(
@@ -92,9 +92,14 @@ async def responder_disponibilidad(mensaje: str, forzar: bool = False) -> ChatOu
 
     actividad = detectar_actividad(mensaje)
     tag = etiqueta_mencionada(mensaje, espacios)
-    que_busca = tag or (actividad.nombre if actividad else None)
+    libre_txt = None if (actividad or tag) else actividad_libre(mensaje)
+    que_busca = tag or (actividad.nombre if actividad else None) or libre_txt
     if que_busca:
-        datos = [d for d in todos if sirve_para(d["espacio"], actividad, tag)]
+        if libre_txt:  # actividad no catalogada: sirve el espacio que la mencione en nombre o descripción
+            ids = {e["id"] for e in espacios_que_mencionan(libre_txt, espacios)}
+            datos = [d for d in todos if d["espacio"]["id"] in ids]
+        else:
+            datos = [d for d in todos if sirve_para(d["espacio"], actividad, tag)]
         if not datos:
             return ChatOut(
                 respuesta=f"Por ahora no hay espacios para **{que_busca}** en ReservaCampus. "
@@ -189,7 +194,8 @@ async def chat(datos: ChatIn, request: Request, authorization: str | None = Head
     limitar(request.client.host if request.client else "desconocido")
     # Si menciona una actividad (conocida o definida por el admin en un espacio), se responde con los
     # espacios reales que sirven para ella, salvo que la intención sea otra acción (cancelar, mis reservas...)
-    mencion_actividad = detectar_actividad(datos.mensaje) or menciona_jugar(datos.mensaje)
+    mencion_actividad = (detectar_actividad(datos.mensaje) or menciona_jugar(datos.mensaje)
+                         or actividad_libre(datos.mensaje))
     intencion = detectar(datos.mensaje)
     if not mencion_actividad and (not intencion or intencion.nombre in ("disponibilidad", "tipos")):
         try:

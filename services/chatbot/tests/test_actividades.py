@@ -137,3 +137,26 @@ def test_actividad_nueva_no_catalogada(monkeypatch):
 def test_jugar_ambiguo_incluye_sala_recreativa(monkeypatch):
     r = chat(monkeypatch, "hay algún espacio libre para jugar?", ACTUALES + [GAMER])
     assert "Sala Gamer" in r["respuesta"] and "videojuegos" in r["respuesta"]
+
+
+@pytest.mark.parametrize("mensaje,esperado", [
+    ("hay espacio para hacer yoga?", "yoga"),
+    ("necesito un lugar para practicar danza mañana", "danza"),
+    ("hay sala para hoy?", None),
+    ("algo para 10 personas", None),
+])
+def test_actividad_libre(mensaje, esperado):
+    from app.actividades import actividad_libre
+    assert actividad_libre(mensaje) == esperado
+
+
+def test_yoga_sin_espacio_dice_que_no_hay(monkeypatch):
+    r = chat(monkeypatch, "hay espacio para hacer yoga?", ACTUALES)
+    assert r["respuesta"].startswith("Por ahora no hay espacios para **yoga**")
+
+
+def test_actividad_en_descripcion_de_espacio_nuevo(monkeypatch):
+    danza = espacio(12, "Salón de Espejos", "recreacion", 20, descripcion="Piso de madera para danza")
+    r = chat(monkeypatch, "necesito un lugar para practicar danza mañana", ACTUALES + [danza])
+    assert r["respuesta"].startswith("✅ Sí, hay espacios para danza disponibles mañana")
+    assert "Salón de Espejos" in r["respuesta"]
