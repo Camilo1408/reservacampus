@@ -268,3 +268,16 @@ def test_mostrar_y_ocultar_contrasena(pagina):
     expect(campo).to_have_attribute("type", "password")
     # todos los campos de contraseña tienen su botón
     assert pagina.locator("input[name^=password]").count() == pagina.locator(".pass-toggle").count()
+
+
+def test_modo_oscuro_se_activa_y_se_recuerda(pagina):
+    raiz = pagina.locator("html")
+    inicial = raiz.get_attribute("data-tema")
+    pagina.click("#btn-tema")
+    otro = "claro" if inicial == "oscuro" else "oscuro"
+    expect(raiz).to_have_attribute("data-tema", otro)
+    pagina.reload(wait_until="domcontentloaded")
+    expect(pagina.locator("html")).to_have_attribute("data-tema", otro)
+    if otro == "oscuro":
+        fondo = pagina.evaluate("getComputedStyle(document.body).backgroundColor")
+        assert fondo == "rgb(15, 18, 32)"

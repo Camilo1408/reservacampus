@@ -241,3 +241,20 @@
   };
   document.addEventListener("DOMContentLoaded", () => window.UI.mejorar());
 })();
+
+// ---------- modo oscuro ----------
+(function () {
+  const raiz = document.documentElement;
+  const btn = document.getElementById("btn-tema");
+  const etiquetar = () => {
+    const oscuro = raiz.getAttribute("data-tema") === "oscuro";
+    if (btn) { btn.setAttribute("aria-label", oscuro ? "Cambiar a modo claro" : "Cambiar a modo oscuro"); btn.setAttribute("aria-pressed", String(oscuro)); }
+  };
+  etiquetar();
+  if (btn) btn.addEventListener("click", () => {
+    const nuevo = raiz.getAttribute("data-tema") === "oscuro" ? "claro" : "oscuro";
+    raiz.setAttribute("data-tema", nuevo);
+    try { localStorage.setItem("rc_tema", nuevo); } catch (e) { /* sin almacenamiento: solo esta sesión */ }
+    etiquetar();
+  });
+})();

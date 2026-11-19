@@ -31,8 +31,12 @@ class NotificacionOut(BaseModel):
     creada_en: datetime
 
 
+from . import keepalive
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    keepalive.iniciar()
     global consumidor
     Base.metadata.create_all(engine)
     consumidor = Consumidor()

@@ -56,8 +56,12 @@ def sembrar_admin():
             log.info("Usuario administrador creado")
 
 
+from . import keepalive
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    keepalive.iniciar()
     migrar()
     Base.metadata.create_all(engine)
     sembrar_admin()

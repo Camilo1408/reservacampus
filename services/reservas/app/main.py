@@ -76,8 +76,12 @@ def sembrar():
             db.commit()
 
 
+from . import keepalive
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    keepalive.iniciar()
     migrar()
     Base.metadata.create_all(engine)
     sembrar()

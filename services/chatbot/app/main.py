@@ -12,6 +12,8 @@ from . import config, ia
 from .actividades import TIPOS as TIPOS_ESPACIO, actividad_libre, pide_espacio, detectar_actividad, espacios_que_mencionan, etiqueta_mencionada, menciona_jugar, resumen_oferta, sirve_para
 from .reglas import detectar, extraer_fecha, extraer_hora, extraer_personas, franjas_libres
 
+from . import keepalive
+
 app = FastAPI(
     title="Chatbot Service · ReservaCampus",
     description="Asistente virtual híbrido: motor de reglas determinista + IA (Groq) como respaldo.",
@@ -182,6 +184,11 @@ async def listado_espacios() -> list[dict]:
         return await api_reservas("/espacios") or []
     except Exception:
         return []
+
+
+@app.on_event("startup")
+def _keepalive():
+    keepalive.iniciar()
 
 
 @app.get("/health", tags=["sistema"])
